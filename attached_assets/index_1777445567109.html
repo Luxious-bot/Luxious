@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUXIOUS — Autonomous Decision-Maker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Barlow:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --o:#FF5E14;--o2:#FF8147;--o3:rgba(255,94,20,0.12);
+  --g:#00E676;--g2:#00FF87;--g3:rgba(0,230,118,0.1);
+  --bg:#050705;--bg2:#080D07;--s1:#0D140B;--s2:#131C10;
+  --wire:rgba(0,230,118,0.08);--wire-o:rgba(255,94,20,0.1);
+  --t:#D4EDCC;--td:#6B8F60;--tm:#2E4428;--white:#F0F7EC;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t);font-family:'DM Mono',monospace;font-size:14px;line-height:1.6;overflow-x:hidden;cursor:crosshair}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);pointer-events:none;z-index:9990}
+.cursor{position:fixed;width:8px;height:8px;border-radius:50%;background:var(--o);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .15s,height .15s,background .15s;mix-blend-mode:screen}
+.cursor-ring{position:fixed;width:32px;height:32px;border:1px solid rgba(255,94,20,0.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s,border-color .2s}
+.world-grid{position:fixed;inset:0;background-image:linear-gradient(var(--wire) 1px,transparent 1px),linear-gradient(90deg,var(--wire) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;justify-content:space-between;padding:20px 56px;background:rgba(5,7,5,0.75);backdrop-filter:blur(24px);border-bottom:1px solid var(--wire)}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.12em;color:var(--white);text-decoration:none;display:flex;align-items:center;gap:10px}
+.logo-tag{background:var(--o);color:#000;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:0.2em;padding:3px 8px;border-radius:2px}
+.nav-links{display:flex;align-items:center;gap:36px;list-style:none}
+.nav-links a{color:var(--td);text-decoration:none;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:var(--g)}
+.btn-launch{background:transparent;color:var(--g) !important;border:1px solid rgba(0,230,118,0.4) !important;padding:8px 22px;font-size:11px !important;letter-spacing:0.12em !important;transition:all .2s !important;border-radius:2px}
+.btn-launch:hover{background:var(--g3) !important;border-color:var(--g) !important}
+
+/* HERO */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;padding:140px 56px 80px;overflow:hidden;z-index:1}
+.hero-left{flex:1;max-width:680px}
+.hero-right{flex:0 0 400px;margin-left:auto}
+.hero-glow{position:absolute;top:10%;right:5%;width:600px;height:600px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,230,118,0.04) 0%,rgba(255,94,20,0.03) 50%,transparent 75%);pointer-events:none;animation:breathe 5s ease-in-out infinite}
+
+/* Agent orb */
+.agent-orb{width:340px;height:340px;position:relative;margin:0 auto}
+.orb-glow{position:absolute;inset:-40px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,230,118,0.05),transparent 70%);pointer-events:none}
+.orb-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(0,230,118,0.12);animation:spin 12s linear infinite}
+.orb-ring::before{content:'';position:absolute;top:-3px;left:50%;width:6px;height:6px;border-radius:50%;background:var(--g);transform:translateX(-50%);box-shadow:0 0 12px var(--g2)}
+.orb-ring2{position:absolute;inset:20px;border-radius:50%;border:1px solid rgba(255,94,20,0.15);animation:spin 8s linear infinite reverse}
+.orb-ring2::before{content:'';position:absolute;bottom:-3px;left:50%;width:5px;height:5px;border-radius:50%;background:var(--o);transform:translateX(-50%);box-shadow:0 0 10px var(--o2)}
+.orb-core{position:absolute;inset:50px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,130,70,0.15),rgba(0,230,118,0.08) 60%,transparent 80%);border:1px solid rgba(0,230,118,0.2);animation:breathe 3s ease-in-out infinite}
+.data-node{position:absolute;background:var(--s1);border:1px solid var(--wire);padding:8px 14px;border-radius:2px;font-size:10px;letter-spacing:0.1em;white-space:nowrap;animation:floatNode 4s ease-in-out infinite}
+.data-node.n1{top:10px;left:-60px;color:var(--g);animation-delay:0s}
+.data-node.n2{top:60px;right:-70px;color:var(--o);animation-delay:.8s}
+.data-node.n3{bottom:80px;left:-50px;color:var(--td);animation-delay:1.6s}
+.data-node.n4{bottom:20px;right:-80px;color:var(--g);animation-delay:2.4s}
+.orb-status{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--g);letter-spacing:0.15em;margin-top:36px;justify-content:center}
+.orb-pulse{width:8px;height:8px;border-radius:50%;background:var(--g2);box-shadow:0 0 8px var(--g2);animation:blink 1.4s ease-in-out infinite}
+
+@keyframes floatNode{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.04);opacity:1}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes slideIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* Hero text */
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--o);margin-bottom:28px;opacity:0;animation:slideIn .6s .1s ease forwards}
+.hero-eyebrow span{display:inline-block;width:32px;height:1px;background:var(--o)}
+h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,9vw,110px);line-height:.92;letter-spacing:0.03em;margin-bottom:32px;opacity:0;animation:slideIn .6s .2s ease forwards}
+h1 .w1{color:var(--white);display:block}
+h1 .w2{color:var(--o);display:block}
+h1 .w3{color:var(--g);display:block}
+.hero-desc{max-width:520px;font-family:'Barlow',sans-serif;font-size:17px;font-weight:300;color:var(--td);line-height:1.8;margin-bottom:44px;border-left:2px solid var(--o);padding-left:20px;opacity:0;animation:slideIn .6s .3s ease forwards}
+.hero-desc strong{color:var(--white);font-weight:500}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;opacity:0;animation:slideIn .6s .4s ease forwards}
+.btn-main{background:var(--o);color:#000;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;padding:14px 30px;text-decoration:none;border-radius:2px;border:2px solid var(--o);transition:all .25s;display:inline-flex;align-items:center;gap:8px}
+.btn-main:hover{background:transparent;color:var(--o)}
+.btn-ghost{background:transparent;color:var(--g);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;padding:14px 28px;text-decoration:none;border-radius:2px;border:1px solid rgba(0,230,118,0.25);transition:all .25s}
+.btn-ghost:hover{border-color:var(--g);background:var(--g3)}
+.hero-stats{display:flex;gap:40px;margin-top:56px;padding-top:40px;border-top:1px solid var(--wire);opacity:0;animation:slideIn .6s .5s ease forwards}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:0.05em;color:var(--white);line-height:1}
+.stat-val span{color:var(--o)}
+.stat-lbl{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--tm);margin-top:4px}
+
+/* SECTIONS */
+section{position:relative;z-index:1}
+.sec{max-width:1200px;margin:0 auto;padding:100px 56px}
+.sec-tag{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--o);margin-bottom:52px;display:flex;align-items:center;gap:14px}
+.sec-tag::before{content:'';display:block;width:24px;height:1px;background:var(--o)}
+.sec-tag::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--wire-o),transparent);max-width:120px}
+h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,64px);line-height:1;letter-spacing:0.04em;margin-bottom:16px}
+.h2-sub{font-family:'Barlow',sans-serif;font-size:16px;font-weight:300;color:var(--td);max-width:500px;line-height:1.7}
+
+/* CAPABILITIES */
+.cap-bg{background:var(--bg2)}
+.cap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--wire);border:1px solid var(--wire);margin-top:60px}
+.cap-card{background:var(--bg2);padding:44px 36px;transition:background .3s;position:relative;overflow:hidden}
+.cap-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--o),var(--g));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.cap-card:hover{background:var(--s1)}
+.cap-card:hover::before{transform:scaleX(1)}
+.cap-num{font-family:'Bebas Neue',sans-serif;font-size:72px;color:var(--tm);line-height:1;margin-bottom:20px}
+.cap-card:nth-child(odd) .cap-num{color:rgba(255,94,20,0.18)}
+.cap-card:nth-child(even) .cap-num{color:rgba(0,230,118,0.12)}
+.cap-icon{font-size:24px;margin-bottom:14px;display:block}
+.cap-card h3{font-family:'Barlow',sans-serif;font-weight:700;font-size:17px;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:10px;color:var(--white)}
+.cap-card p{font-size:13px;color:var(--td);line-height:1.7}
+.cap-tag{display:inline-flex;align-items:center;gap:6px;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;margin-top:18px;color:var(--g)}
+.cap-tag::before{content:'→';color:var(--o)}
+
+/* MISSION FLOW */
+.flow-sec{background:var(--bg)}
+.mission-demo{margin-top:60px;border:1px solid var(--wire);border-radius:4px;overflow:hidden;background:var(--s1)}
+.mission-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--s2);border-bottom:1px solid var(--wire)}
+.bar-left{display:flex;align-items:center;gap:10px}
+.bar-dot{width:8px;height:8px;border-radius:50%}
+.bar-dot.r{background:#FF5F56}.bar-dot.y{background:#FFBD2E}.bar-dot.g{background:var(--g)}
+.bar-title{font-size:11px;letter-spacing:0.1em;color:var(--td);transition:opacity .3s}
+.bar-status{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--g);letter-spacing:0.12em}
+.bar-pulse{width:7px;height:7px;border-radius:50%;background:var(--g2);animation:blink 1.2s infinite}
+.mission-body{padding:32px 40px;display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.mission-steps{display:flex;flex-direction:column}
+.m-step{display:flex;gap:16px;padding:18px 0;border-bottom:1px solid var(--wire);align-items:flex-start}
+.m-step:last-child{border-bottom:none}
+.m-ico{width:32px;height:32px;flex-shrink:0;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.m-ico.done{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3)}
+.m-ico.active{background:rgba(255,94,20,0.12);border:1px solid rgba(255,94,20,0.4)}
+.m-ico.wait{background:var(--s2);border:1px solid var(--wire)}
+.m-info h4{font-size:13px;font-weight:500;color:var(--white);margin-bottom:4px;letter-spacing:0.04em}
+.m-info p{font-size:11px;color:var(--td);line-height:1.6}
+.m-badge{font-size:9px;letter-spacing:0.15em;padding:2px 8px;border-radius:999px;display:inline-block;margin-top:6px}
+.m-badge.done{background:rgba(0,230,118,0.08);color:var(--g);border:1px solid rgba(0,230,118,0.2)}
+.m-badge.active{background:rgba(255,94,20,0.1);color:var(--o);border:1px solid rgba(255,94,20,0.3)}
+.m-badge.pend{background:var(--s2);color:var(--tm);border:1px solid var(--wire)}
+.mission-output{display:flex;flex-direction:column;gap:16px}
+.out-header{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--o);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.out-header::after{content:'';flex:1;height:1px;background:var(--wire-o)}
+.out-block{background:var(--bg2);border:1px solid var(--wire);border-radius:2px;padding:16px 20px;font-size:12px}
+.out-block .label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--td);margin-bottom:10px}
+.out-result{color:var(--white);line-height:1.7}
+.out-result .hi-o{color:var(--o)}.out-result .hi-g{color:var(--g)}
+.out-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:10px;padding:3px 10px;border-radius:999px;letter-spacing:0.08em}
+.chip.o{background:rgba(255,94,20,0.1);color:var(--o);border:1px solid rgba(255,94,20,0.2)}
+.chip.g{background:rgba(0,230,118,0.08);color:var(--g);border:1px solid rgba(0,230,118,0.15)}
+
+/* TOOLS */
+.tools-sec{background:var(--bg2)}
+.tools-flex{display:flex;gap:60px;align-items:flex-start;margin-top:60px}
+.tools-left{flex:1}
+.tools-right{flex:0 0 380px}
+.tool-list{display:flex;flex-direction:column}
+.tool-item{display:flex;align-items:center;gap:18px;padding:20px 0;border-bottom:1px solid var(--wire);transition:all .3s;cursor:default}
+.tool-item:hover .tool-icon-wrap{border-color:var(--o)}
+.tool-item:hover .tool-name{color:var(--o)}
+.tool-icon-wrap{width:44px;height:44px;flex-shrink:0;border:1px solid var(--wire);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:20px;transition:border-color .3s}
+.tool-name{font-family:'Barlow',sans-serif;font-weight:600;font-size:15px;color:var(--white);letter-spacing:0.04em;transition:color .3s}
+.tool-desc{font-size:12px;color:var(--td);margin-top:2px}
+.tool-status{margin-left:auto;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;padding:3px 10px;border-radius:999px}
+.ts-active{background:rgba(0,230,118,0.08);color:var(--g);border:1px solid rgba(0,230,118,0.2)}
+.ts-soon{background:rgba(255,94,20,0.08);color:var(--o);border:1px solid rgba(255,94,20,0.2)}
+.tools-right-box{background:var(--s1);border:1px solid var(--wire);border-radius:4px;padding:32px 28px;position:sticky;top:100px}
+.trb-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.08em;color:var(--white);margin-bottom:6px}
+.trb-sub{font-size:12px;color:var(--td);margin-bottom:24px}
+.conn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.conn-item{background:var(--s2);border:1px solid var(--wire);border-radius:2px;padding:12px 8px;text-align:center;font-size:18px;transition:all .3s;cursor:default}
+.conn-item:hover{border-color:var(--g);background:var(--g3)}
+.conn-item span{display:block;font-size:9px;letter-spacing:0.1em;color:var(--tm);margin-top:4px}
+
+/* USE CASES */
+.use-sec{background:var(--bg)}
+.use-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:60px}
+.use-card{background:var(--s1);border:1px solid var(--wire);border-radius:4px;padding:36px;transition:all .3s;position:relative;overflow:hidden}
+.use-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--o),transparent);transform:scaleX(0);transition:transform .4s}
+.use-card:hover{background:var(--s2)}
+.use-card:hover::after{transform:scaleX(1)}
+.use-num{font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;margin-bottom:16px}
+.use-card:nth-child(odd) .use-num{color:rgba(255,94,20,0.2)}
+.use-card:nth-child(even) .use-num{color:rgba(0,230,118,0.15)}
+.use-card h3{font-family:'Barlow',sans-serif;font-weight:700;font-size:18px;letter-spacing:0.04em;text-transform:uppercase;color:var(--white);margin-bottom:10px}
+.use-card p{font-size:13px;color:var(--td);line-height:1.7}
+.use-steps{display:flex;flex-direction:column;gap:8px;margin-top:20px}
+.use-step{display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--td)}
+.use-step::before{content:'→';color:var(--g);flex-shrink:0;margin-top:1px}
+
+/* PRICING */
+.price-sec{background:var(--bg2)}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:60px}
+.p-card{border:1px solid var(--wire);background:var(--bg);padding:44px 32px;border-radius:4px;position:relative;transition:all .3s}
+.p-card:hover{background:var(--s1)}
+.p-card.hot{border-color:rgba(255,94,20,0.4);background:var(--s1)}
+.p-hot-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--o);color:#000;font-size:9px;font-weight:700;letter-spacing:0.2em;padding:4px 16px;border-radius:999px;text-transform:uppercase}
+.p-tier{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--td);margin-bottom:10px}
+.p-price{font-family:'Bebas Neue',sans-serif;font-size:60px;line-height:1;letter-spacing:0.02em;margin-bottom:4px}
+.p-card:nth-child(2) .p-price{color:var(--o)}
+.p-card:not(:nth-child(2)) .p-price{color:var(--g)}
+.p-per{font-size:11px;color:var(--tm);margin-bottom:32px}
+.p-features{list-style:none;margin-bottom:36px}
+.p-features li{display:flex;align-items:flex-start;gap:10px;padding:9px 0;font-size:13px;color:var(--td);border-bottom:1px solid var(--wire)}
+.p-features li::before{content:'◆';font-size:7px;color:var(--g);flex-shrink:0;margin-top:4px}
+.p-card.hot .p-features li::before{color:var(--o)}
+.p-btn{display:block;text-align:center;padding:13px;border-radius:2px;text-decoration:none;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;transition:all .2s}
+.pb-free{border:1px solid var(--wire);color:var(--td)}
+.pb-free:hover{border-color:var(--g);color:var(--g);background:var(--g3)}
+.pb-pro{background:var(--o);color:#000}
+.pb-pro:hover{background:var(--o2)}
+.pb-team{border:1px solid var(--wire);color:var(--td)}
+.pb-team:hover{border-color:var(--g);color:var(--g);background:var(--g3)}
+
+/* ROADMAP */
+.road-sec{background:var(--bg)}
+.road-list{margin-top:60px}
+.road-item{display:grid;grid-template-columns:180px 48px 1fr;gap:0 16px;padding:24px 0;border-bottom:1px solid var(--wire);align-items:start}
+.rd-date{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--td);padding-top:4px}
+.rd-node{display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.rd-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--tm)}
+.rd-dot.done{background:var(--g);border-color:var(--g)}
+.rd-dot.now{background:var(--o);border-color:var(--o);animation:pulseO 1.5s infinite}
+@keyframes pulseO{0%,100%{box-shadow:0 0 0 0 rgba(255,94,20,.5)}50%{box-shadow:0 0 0 7px rgba(255,94,20,0)}}
+.rd-content h3{font-family:'Barlow',sans-serif;font-weight:700;font-size:16px;letter-spacing:0.05em;text-transform:uppercase;color:var(--white);margin-bottom:6px}
+.rd-content p{font-size:12px;color:var(--td);max-width:480px;line-height:1.7}
+.rd-chip{display:inline-block;margin-top:8px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;padding:3px 10px;border-radius:999px}
+.rc-done{background:rgba(0,230,118,0.08);color:var(--g);border:1px solid rgba(0,230,118,0.15)}
+.rc-now{background:rgba(255,94,20,0.1);color:var(--o);border:1px solid rgba(255,94,20,0.25)}
+.rc-plan{background:var(--s1);color:var(--tm);border:1px solid var(--wire)}
+
+/* FAQ */
+.faq-sec{background:var(--bg2)}
+.faq-wrap{max-width:740px;margin-top:60px}
+.faq-item{border-bottom:1px solid var(--wire)}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:22px 0;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:600;font-size:16px;color:var(--white);transition:color .2s;user-select:none}
+.faq-q:hover{color:var(--o)}
+.faq-plus{width:28px;height:28px;flex-shrink:0;border:1px solid var(--wire);border-radius:2px;display:flex;align-items:center;justify-content:center;color:var(--o);font-size:18px;transition:transform .3s,background .2s}
+.faq-item.open .faq-plus{transform:rotate(45deg);background:rgba(255,94,20,0.1)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease;font-size:13px;color:var(--td);line-height:1.8}
+.faq-item.open .faq-a{max-height:200px;padding-bottom:22px}
+
+/* CONNECT */
+.connect-sec{background:var(--bg)}
+.conn-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--wire);border:1px solid var(--wire);margin-top:60px}
+.conn-card{background:var(--bg);padding:44px 32px;text-decoration:none;color:var(--t);transition:background .3s;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden}
+.conn-card::before{content:'↗';position:absolute;top:22px;right:28px;color:var(--tm);font-size:18px;transition:color .3s,transform .3s}
+.conn-card:hover{background:var(--s1)}
+.conn-card:hover::before{color:var(--o);transform:translate(2px,-2px)}
+.cc-icon{font-size:32px;margin-bottom:6px}
+.cc-type{font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--o)}
+.cc-title{font-family:'Barlow',sans-serif;font-weight:700;font-size:17px;color:var(--white);letter-spacing:0.04em}
+.cc-desc{font-size:12px;color:var(--td)}
+
+/* FINAL CTA */
+.final-cta{background:var(--bg2);border-top:1px solid var(--wire);text-align:center;overflow:hidden;position:relative}
+.final-inner{max-width:720px;margin:0 auto;padding:130px 40px;position:relative}
+.final-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(255,94,20,0.06),rgba(0,230,118,0.04) 45%,transparent 70%);pointer-events:none}
+.final-label{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--g);margin-bottom:24px;display:flex;align-items:center;justify-content:center;gap:8px}
+.fl-dot{width:6px;height:6px;border-radius:50%;background:var(--g2);animation:blink 1.2s infinite}
+.final-inner h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,6vw,72px);line-height:1;margin-bottom:16px;position:relative}
+.final-inner p{font-family:'Barlow',sans-serif;font-weight:300;font-size:16px;color:var(--td);margin-bottom:44px;position:relative}
+
+/* FOOTER */
+footer{background:var(--bg);border-top:1px solid var(--wire);padding:44px 56px;position:relative;z-index:1}
+.foot-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.foot-logo{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.12em;color:var(--white)}
+.foot-logo span{color:var(--o)}
+.foot-sub{font-size:11px;color:var(--tm);margin-top:2px;letter-spacing:0.08em}
+.foot-links{display:flex;gap:24px;flex-wrap:wrap}
+.foot-links a{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--tm);text-decoration:none;transition:color .2s}
+.foot-links a:hover{color:var(--g)}
+.foot-social{display:flex;gap:10px}
+.foot-social a{width:36px;height:36px;border:1px solid var(--wire);border-radius:2px;display:flex;align-items:center;justify-content:center;color:var(--td);text-decoration:none;font-size:14px;transition:all .2s}
+.foot-social a:hover{border-color:var(--o);color:var(--o);background:rgba(255,94,20,0.06)}
+.foot-copy{width:100%;text-align:center;font-size:10px;color:var(--tm);padding-top:28px;margin-top:12px;border-top:1px solid var(--wire);letter-spacing:0.08em}
+
+/* scroll-reveal */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .55s ease,transform .55s ease}
+.reveal.in{opacity:1;transform:none}
+
+@media(max-width:900px){
+  nav{padding:16px 20px}
+  .nav-links{display:none}
+  .hero{flex-direction:column;padding:120px 20px 60px}
+  .hero-right{width:100%;max-width:280px;margin:40px auto 0}
+  .agent-orb{width:260px;height:260px}
+  .orb-core{inset:40px}
+  .data-node{display:none}
+  .cap-grid,.price-grid,.conn-cards{grid-template-columns:1fr}
+  .mission-body{grid-template-columns:1fr;flex-direction:column}
+  .tools-flex{flex-direction:column}
+  .tools-right{display:none}
+  .use-grid{grid-template-columns:1fr}
+  .road-item{grid-template-columns:100px 36px 1fr}
+  .sec{padding:60px 20px}
+  footer{padding:36px 20px}
+}
+</style>
+</head>
+<body>
+
+<div class="world-grid"></div>
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="ring"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">LUXIOUS <span class="logo-tag">AGENT</span></a>
+  <ul class="nav-links">
+    <li><a href="#capabilities">CAPABILITIES</a></li>
+    <li><a href="#mission">MISSIONS</a></li>
+    <li><a href="#tools">TOOLS</a></li>
+    <li><a href="#pricing">PRICING</a></li>
+    <li><a href="#roadmap">ROADMAP</a></li>
+    <li><a href="https://t.me/Luxious01_bot" class="btn-launch" target="_blank">ACTIVATE ↗</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-left">
+    <div class="hero-eyebrow"><span></span> AUTONOMOUS AI AGENT · ONLINE</div>
+    <h1>
+      <span class="w1">HELLO,</span>
+      <span class="w2">I'M</span>
+      <span class="w3">LUXIOUS.</span>
+    </h1>
+    <p class="hero-desc">
+      Your <strong>autonomous decision-maker</strong> that connects tools, data, and apps into one seamless brain. I plan multi-step missions, research deeply, and <strong>execute without hand-holding.</strong>
+    </p>
+    <div class="hero-ctas">
+      <a href="https://t.me/Luxious01_bot" class="btn-main" target="_blank">⚡ ACTIVATE LUXIOUS</a>
+      <a href="#mission" class="btn-ghost">SEE IN ACTION →</a>
+    </div>
+    <div class="hero-stats">
+      <div><div class="stat-val">∞<span>+</span></div><div class="stat-lbl">MISSIONS POSSIBLE</div></div>
+      <div><div class="stat-val">24<span>/7</span></div><div class="stat-lbl">ALWAYS ONLINE</div></div>
+      <div><div class="stat-val">0<span>%</span></div><div class="stat-lbl">HAND-HOLDING</div></div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="agent-orb">
+      <div class="orb-glow"></div>
+      <div class="orb-ring"></div>
+      <div class="orb-ring2"></div>
+      <div class="orb-core"></div>
+      <div class="data-node n1">● MISSION ACTIVE</div>
+      <div class="data-node n2">TOOLS: 12 LINKED</div>
+      <div class="data-node n3">DEPTH: 5 LAYERS</div>
+      <div class="data-node n4">EXEC: AUTONOMOUS</div>
+    </div>
+    <div class="orb-status"><span class="orb-pulse"></span> LUXIOUS IS ONLINE AND READY</div>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section id="capabilities" class="cap-bg">
+  <div class="sec">
+    <div class="sec-tag">// 01 — CORE CAPABILITIES</div>
+    <h2>WHAT I <span style="color:var(--o)">DO.</span></h2>
+    <p class="h2-sub">Not a chatbot. Not a prompt machine. A fully autonomous agent that thinks, plans, and executes across your entire digital world.</p>
+    <div class="cap-grid">
+      <div class="cap-card reveal">
+        <div class="cap-num">01</div>
+        <span class="cap-icon">🧠</span>
+        <h3>MULTI-STEP PLANNING</h3>
+        <p>I decompose complex goals into executable sub-missions, sequencing them intelligently to reach your objective without constant direction.</p>
+        <div class="cap-tag">AUTONOMOUS REASONING</div>
+      </div>
+      <div class="cap-card reveal">
+        <div class="cap-num">02</div>
+        <span class="cap-icon">🔍</span>
+        <h3>DEEP RESEARCH</h3>
+        <p>I search, synthesize, and cross-reference across the web, documents, and live data sources — delivering insight, not just results.</p>
+        <div class="cap-tag">REAL-TIME INTEL</div>
+      </div>
+      <div class="cap-card reveal">
+        <div class="cap-num">03</div>
+        <span class="cap-icon">⚡</span>
+        <h3>TOOL EXECUTION</h3>
+        <p>APIs, databases, apps, files — I connect and orchestrate them all in one seamless pipeline. No switching tabs. No manual steps.</p>
+        <div class="cap-tag">ZERO FRICTION</div>
+      </div>
+      <div class="cap-card reveal">
+        <div class="cap-num">04</div>
+        <span class="cap-icon">🔗</span>
+        <h3>DATA UNIFICATION</h3>
+        <p>Your scattered data becomes one coherent intelligence layer. I bridge the gap between your tools, turning silos into a seamless brain.</p>
+        <div class="cap-tag">CONNECTED SYSTEMS</div>
+      </div>
+      <div class="cap-card reveal">
+        <div class="cap-num">05</div>
+        <span class="cap-icon">🎯</span>
+        <h3>DECISION MAKING</h3>
+        <p>I don't just surface options — I evaluate, prioritize, and act. Assign a mission and I'll make the calls that move things forward.</p>
+        <div class="cap-tag">AUTONOMOUS JUDGMENT</div>
+      </div>
+      <div class="cap-card reveal">
+        <div class="cap-num">06</div>
+        <span class="cap-icon">🔄</span>
+        <h3>SELF-CORRECTION</h3>
+        <p>When paths block, I reroute. When outputs miss, I iterate. No error is a dead end — just a signal to adapt and keep moving.</p>
+        <div class="cap-tag">ADAPTIVE LOOPS</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MISSION DEMO -->
+<section id="mission" class="flow-sec">
+  <div class="sec">
+    <div class="sec-tag">// 02 — LIVE MISSION DEMO</div>
+    <h2>A MISSION IN <span style="color:var(--g)">MOTION.</span></h2>
+    <p class="h2-sub">Watch Luxious handle a real multi-step task from one simple instruction — no babysitting required.</p>
+    <div class="mission-demo reveal">
+      <div class="mission-bar">
+        <div class="bar-left">
+          <div class="bar-dot r"></div><div class="bar-dot y"></div><div class="bar-dot g"></div>
+          <div class="bar-title">LUXIOUS · MISSION CONTROL</div>
+        </div>
+        <div class="bar-status"><span class="bar-pulse"></span> EXECUTING MISSION</div>
+      </div>
+      <div class="mission-body">
+        <div class="mission-steps">
+          <div class="m-step">
+            <div class="m-ico done">✓</div>
+            <div class="m-info">
+              <h4>PARSE OBJECTIVE</h4>
+              <p>Understood goal: "Research top AI tools for content creation and compile a report with pricing."</p>
+              <span class="m-badge done">COMPLETE</span>
+            </div>
+          </div>
+          <div class="m-step">
+            <div class="m-ico done">✓</div>
+            <div class="m-info">
+              <h4>DEEP RESEARCH</h4>
+              <p>Searched 24 sources, cross-referenced product pages, extracted feature data and pricing tiers.</p>
+              <span class="m-badge done">COMPLETE</span>
+            </div>
+          </div>
+          <div class="m-step">
+            <div class="m-ico active">⟳</div>
+            <div class="m-info">
+              <h4>SYNTHESIZE & RANK</h4>
+              <p>Scoring tools by capability, cost, and fit. Building structured comparison matrix now...</p>
+              <span class="m-badge active">IN PROGRESS</span>
+            </div>
+          </div>
+          <div class="m-step">
+            <div class="m-ico wait">○</div>
+            <div class="m-info">
+              <h4>GENERATE REPORT</h4>
+              <p>Will format findings into a clean, actionable document with recommendations.</p>
+              <span class="m-badge pend">QUEUED</span>
+            </div>
+          </div>
+          <div class="m-step">
+            <div class="m-ico wait">○</div>
+            <div class="m-info">
+              <h4>DELIVER OUTPUT</h4>
+              <p>Send final report directly to your Telegram with summary and download link.</p>
+              <span class="m-badge pend">QUEUED</span>
+            </div>
+          </div>
+        </div>
+        <div class="mission-output">
+          <div class="out-header">LIVE OUTPUT</div>
+          <div class="out-block">
+            <div class="label">SOURCES ANALYZED</div>
+            <div class="out-result"><span class="hi-g">24</span> web sources · <span class="hi-o">8</span> product docs · <span class="hi-g">3</span> comparison sites</div>
+            <div class="out-chips">
+              <span class="chip g">OpenAI</span><span class="chip g">Jasper</span><span class="chip g">Runway</span><span class="chip o">+21 more</span>
+            </div>
+          </div>
+          <div class="out-block">
+            <div class="label">TOP FINDING SO FAR</div>
+            <div class="out-result"><span class="hi-o">7 tools</span> offer free tiers. <span class="hi-g">3 standouts</span> identified based on capability-to-cost ratio.</div>
+          </div>
+          <div class="out-block">
+            <div class="label">ESTIMATED COMPLETION</div>
+            <div class="out-result"><span class="hi-g">~45 seconds</span> remaining — no input needed.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<section id="tools" class="tools-sec">
+  <div class="sec">
+    <div class="sec-tag">// 03 — CONNECTED TOOLS</div>
+    <h2>THE TOOLS <span style="color:var(--o)">I WIELD.</span></h2>
+    <p class="h2-sub">I integrate with the apps and data sources you already use — and orchestrate them as one unified system.</p>
+    <div class="tools-flex">
+      <div class="tools-left">
+        <div class="tool-list">
+          <div class="tool-item reveal">
+            <div class="tool-icon-wrap">🌐</div>
+            <div><div class="tool-name">WEB SEARCH & SCRAPING</div><div class="tool-desc">Real-time research across the open web with deep content extraction</div></div>
+            <span class="tool-status ts-active">LIVE</span>
+          </div>
+          <div class="tool-item reveal">
+            <div class="tool-icon-wrap">📊</div>
+            <div><div class="tool-name">DATA ANALYSIS</div><div class="tool-desc">Process CSVs, spreadsheets, and databases — extract patterns and insights</div></div>
+            <span class="tool-status ts-active">LIVE</span>
+          </div>
+          <div class="tool-item reveal">
+            <div class="tool-icon-wrap">📝</div>
+            <div><div class="tool-name">DOCUMENT GENERATION</div><div class="tool-desc">Create reports, summaries, briefs, and structured content automatically</div></div>
+            <span class="tool-status ts-active">LIVE</span>
+          </div>
+          <div class="tool-item reveal">
+            <div class="tool-icon-wrap">🔔</div>
+            <div><div class="tool-name">TELEGRAM INTEGRATION</div><div class="tool-desc">Mission control via chat — assign tasks, receive results, stay updated</div></div>
+            <span class="tool-status ts-active">LIVE</span>
+          </div>
+          <div class="tool-item reveal">
+            <div class="tool-icon-wrap">🗂️</div>
+            <div><div class="tool-name">FILE & STORAGE OPS</div><div class="tool-desc">Read, write, and manage files across cloud and local storage seamlessly</div></div>
+            <span class="tool-status ts-soon">SOON</span>
+          </div>
+          <div class="tool-item reveal">
+            <div class="tool-icon-wrap">🔌</div>
+            <div><div class="tool-name">API ORCHESTRATION</div><div class="tool-desc">Chain external APIs into complex multi-step automated workflows</div></div>
+            <span class="tool-status ts-soon">SOON</span>
+          </div>
+        </div>
+      </div>
+      <div class="tools-right">
+        <div class="tools-right-box reveal">
+          <div class="trb-title">INTEGRATION HUB</div>
+          <div class="trb-sub">Apps Luxious connects to out of the box</div>
+          <div class="conn-grid">
+            <div class="conn-item">🔔<span>Telegram</span></div>
+            <div class="conn-item">🌐<span>Web</span></div>
+            <div class="conn-item">📄<span>Docs</span></div>
+            <div class="conn-item">📊<span>Sheets</span></div>
+            <div class="conn-item">📁<span>Drive</span></div>
+            <div class="conn-item">📧<span>Email</span></div>
+            <div class="conn-item">🔗<span>APIs</span></div>
+            <div class="conn-item">🗄️<span>DB</span></div>
+            <div class="conn-item">➕<span>More</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section class="use-sec">
+  <div class="sec">
+    <div class="sec-tag">// 04 — USE CASES</div>
+    <h2>WHAT YOU CAN <span style="color:var(--g)">ASSIGN ME.</span></h2>
+    <p class="h2-sub">Give me a goal, not a step-by-step. I handle the rest.</p>
+    <div class="use-grid">
+      <div class="use-card reveal">
+        <div class="use-num">01</div>
+        <h3>COMPETITIVE RESEARCH</h3>
+        <p>Assign me a market or competitor — I'll research, compare, score, and deliver a structured intelligence brief.</p>
+        <div class="use-steps">
+          <div class="use-step">Search 50+ sources autonomously</div>
+          <div class="use-step">Cross-reference pricing, features, reviews</div>
+          <div class="use-step">Deliver ranked analysis report</div>
+        </div>
+      </div>
+      <div class="use-card reveal">
+        <div class="use-num">02</div>
+        <h3>CONTENT PRODUCTION</h3>
+        <p>Give me a topic and target. I'll research, draft, structure, and finalize publication-ready content.</p>
+        <div class="use-steps">
+          <div class="use-step">Research topic depth and angles</div>
+          <div class="use-step">Draft with SEO and audience context</div>
+          <div class="use-step">Deliver formatted, ready-to-publish output</div>
+        </div>
+      </div>
+      <div class="use-card reveal">
+        <div class="use-num">03</div>
+        <h3>DATA PIPELINES</h3>
+        <p>Connect your data sources and I'll clean, transform, analyze, and surface the insights that matter.</p>
+        <div class="use-steps">
+          <div class="use-step">Ingest and normalize raw data</div>
+          <div class="use-step">Run pattern detection and anomaly checks</div>
+          <div class="use-step">Output structured insight reports</div>
+        </div>
+      </div>
+      <div class="use-card reveal">
+        <div class="use-num">04</div>
+        <h3>WORKFLOW AUTOMATION</h3>
+        <p>Describe a repeating task and I'll map it into an automated pipeline — saving you hours every week.</p>
+        <div class="use-steps">
+          <div class="use-step">Map decision logic and triggers</div>
+          <div class="use-step">Build and test the automation loop</div>
+          <div class="use-step">Run silently on schedule, report results</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="price-sec">
+  <div class="sec">
+    <div class="sec-tag">// 05 — PRICING</div>
+    <h2>SIMPLE PLANS. <span style="color:var(--o)">FULL POWER.</span></h2>
+    <p class="h2-sub">Start free. Scale when ready.</p>
+    <div class="price-grid">
+      <div class="p-card reveal">
+        <div class="p-tier">FREE AGENT</div>
+        <div class="p-price">$0</div>
+        <div class="p-per">FOREVER FREE</div>
+        <ul class="p-features">
+          <li>10 missions / day</li>
+          <li>Web research & summaries</li>
+          <li>Basic planning depth</li>
+          <li>Telegram delivery</li>
+        </ul>
+        <a href="https://t.me/Luxious01_bot" class="p-btn pb-free" target="_blank">START FREE →</a>
+      </div>
+      <div class="p-card hot reveal">
+        <div class="p-hot-badge">POPULAR</div>
+        <div class="p-tier">PRO AGENT</div>
+        <div class="p-price">$9</div>
+        <div class="p-per">BILLED MONTHLY</div>
+        <ul class="p-features">
+          <li>Unlimited missions</li>
+          <li>Deep multi-step planning</li>
+          <li>All tool integrations</li>
+          <li>Document generation</li>
+          <li>Priority execution</li>
+        </ul>
+        <a href="https://t.me/Luxious01_bot" class="p-btn pb-pro" target="_blank">GO PRO →</a>
+      </div>
+      <div class="p-card reveal">
+        <div class="p-tier">TEAM BRAIN</div>
+        <div class="p-price">$29</div>
+        <div class="p-per">UP TO 10 USERS</div>
+        <ul class="p-features">
+          <li>Everything in Pro</li>
+          <li>Shared mission workspace</li>
+          <li>API access</li>
+          <li>Custom workflows</li>
+          <li>Dedicated support</li>
+        </ul>
+        <a href="https://t.me/Luxious01_bot" class="p-btn pb-team" target="_blank">GET TEAM →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" class="road-sec">
+  <div class="sec">
+    <div class="sec-tag">// 06 — ROADMAP</div>
+    <h2>WHERE WE'RE <span style="color:var(--g)">HEADED.</span></h2>
+    <p class="h2-sub">Luxious is evolving fast. Here's what's coming.</p>
+    <div class="road-list">
+      <div class="road-item reveal">
+        <div class="rd-date">MARCH 2026</div>
+        <div class="rd-node"><div class="rd-dot done"></div></div>
+        <div class="rd-content">
+          <h3>CORE AGENT LAUNCH</h3>
+          <p>Luxious launched publicly. Web research, multi-step planning, and Telegram delivery live for everyone.</p>
+          <span class="rd-chip rc-done">✓ COMPLETED</span>
+        </div>
+      </div>
+      <div class="road-item reveal">
+        <div class="rd-date">APRIL 2026</div>
+        <div class="rd-node"><div class="rd-dot now"></div></div>
+        <div class="rd-content">
+          <h3>PRO TIER & DEEP MISSIONS</h3>
+          <p>Unlimited missions, deeper planning layers, document generation, and priority processing go live.</p>
+          <span class="rd-chip rc-now">⟳ IN PROGRESS</span>
+        </div>
+      </div>
+      <div class="road-item reveal">
+        <div class="rd-date">MAY 2026</div>
+        <div class="rd-node"><div class="rd-dot"></div></div>
+        <div class="rd-content">
+          <h3>FILE & DOCUMENT OPS</h3>
+          <p>Upload PDFs, spreadsheets, and docs. Luxious reads, processes, and takes action on your files.</p>
+          <span class="rd-chip rc-plan">○ PLANNED</span>
+        </div>
+      </div>
+      <div class="road-item reveal">
+        <div class="rd-date">JUNE 2026</div>
+        <div class="rd-node"><div class="rd-dot"></div></div>
+        <div class="rd-content">
+          <h3>INTERACTIVE MISSION MODE</h3>
+          <p>Mid-mission collaboration. Steer, redirect, and query Luxious while a task is actively in progress.</p>
+          <span class="rd-chip rc-plan">○ PLANNED</span>
+        </div>
+      </div>
+      <div class="road-item reveal">
+        <div class="rd-date">SEPT 2026</div>
+        <div class="rd-node"><div class="rd-dot"></div></div>
+        <div class="rd-content">
+          <h3>APP INTEGRATIONS</h3>
+          <p>Native integrations with Notion, Google Workspace, Slack, Airtable, and 30+ productivity tools.</p>
+          <span class="rd-chip rc-plan">○ PLANNED</span>
+        </div>
+      </div>
+      <div class="road-item reveal">
+        <div class="rd-date">DEC 2026</div>
+        <div class="rd-node"><div class="rd-dot"></div></div>
+        <div class="rd-content">
+          <h3>LUXIOUS API & CUSTOM AGENTS</h3>
+          <p>Developer API launch. Build specialized agents on top of the Luxious autonomous decision layer.</p>
+          <span class="rd-chip rc-plan">○ PLANNED</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="faq-sec">
+  <div class="sec">
+    <div class="sec-tag">// 07 — FAQ</div>
+    <h2>QUESTIONS <span style="color:var(--o)">ANSWERED.</span></h2>
+    <div class="faq-wrap">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What makes Luxious different from a regular chatbot? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Luxious is an autonomous agent — it doesn't just respond to prompts, it plans and executes multi-step missions. You assign a goal, and Luxious breaks it down, uses tools, makes decisions, and delivers a result. No back-and-forth required.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">How do I assign a mission to Luxious? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Simply open the Luxious bot on Telegram, describe your objective in natural language, and Luxious gets to work. You'll receive status updates and the final result delivered directly to your chat.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What kinds of tasks can Luxious handle? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Research and competitive analysis, content creation, data processing, workflow automation, document generation, and multi-source information synthesis. If it can be broken into steps and executed with tools, Luxious can handle it.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Does Luxious require me to stay online during a mission? <span class="faq-plus">+</span></div>
+        <div class="faq-a">No. Luxious operates autonomously. Assign the mission, go do something else, and receive the completed output when it's done. That's the whole point — zero hand-holding.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Is my data safe with Luxious? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Yes. Luxious processes your requests in isolated sessions and does not store personal mission data after completion. All connections are encrypted and we follow strict data handling policies.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Can I cancel my Pro subscription anytime? <span class="faq-plus">+</span></div>
+        <div class="faq-a">Absolutely. Cancel anytime directly through Telegram. Access continues until the end of your billing period with no extra charges or penalties.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONNECT -->
+<section class="connect-sec">
+  <div class="sec">
+    <div class="sec-tag">// 08 — FIND LUXIOUS</div>
+    <h2>CONNECT WITH <span style="color:var(--g)">THE AGENT.</span></h2>
+    <div class="conn-cards">
+      <a href="https://t.me/Luxious01_bot" class="conn-card reveal" target="_blank">
+        <span class="cc-icon">✈️</span>
+        <span class="cc-type">TELEGRAM BOT</span>
+        <span class="cc-title">@LUXIOUS01_BOT</span>
+        <span class="cc-desc">Activate Luxious. Assign your first mission.</span>
+      </a>
+      <a href="https://t.me/Luxious01_bot" class="conn-card reveal" target="_blank">
+        <span class="cc-icon">💬</span>
+        <span class="cc-type">TELEGRAM CHANNEL</span>
+        <span class="cc-title">@LUXIOUS01_BOT</span>
+        <span class="cc-desc">Updates, mission guides, and announcements.</span>
+      </a>
+      <a href="https://x.com/LuxiousBot" class="conn-card reveal" target="_blank">
+        <span class="cc-icon">𝕏</span>
+        <span class="cc-type">X / TWITTER</span>
+        <span class="cc-title">@LUXIOUSBOT</span>
+        <span class="cc-desc">Latest news, feature drops, and agent intel.</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="final-inner">
+    <div class="final-glow"></div>
+    <div class="final-label"><span class="fl-dot"></span> LUXIOUS IS ONLINE · READY TO EXECUTE</div>
+    <h2>ASSIGN YOUR<br><span style="color:var(--o)">FIRST MISSION.</span></h2>
+    <p>No setup. No babysitting. Just results.</p>
+    <a href="https://t.me/Luxious01_bot" class="btn-main" target="_blank" style="display:inline-flex">⚡ ACTIVATE ON TELEGRAM ↗</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-inner">
+    <div>
+      <div class="foot-logo">LUXIOUS<span>BOT</span></div>
+      <div class="foot-sub">AUTONOMOUS DECISION-MAKER</div>
+    </div>
+    <div class="foot-links">
+      <a href="#capabilities">CAPABILITIES</a>
+      <a href="#mission">MISSIONS</a>
+      <a href="#pricing">PRICING</a>
+      <a href="#roadmap">ROADMAP</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="foot-social">
+      <a href="https://x.com/LuxiousBot" target="_blank" title="X">𝕏</a>
+      <a href="https://t.me/Luxious01_bot" target="_blank" title="Telegram">✈</a>
+    </div>
+    <div class="foot-copy">© 2026 LUXIOUSBOT · ALL RIGHTS RESERVED · AUTONOMOUS AI AGENT</div>
+  </div>
+</footer>
+
+<script>
+// Custom cursor
+const cur=document.getElementById('cur'),ring=document.getElementById('ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+});
+(function animRing(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing)})();
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='14px';cur.style.height='14px';cur.style.background='var(--g)';ring.style.width='48px';ring.style.height='48px';ring.style.borderColor='rgba(0,230,118,0.6)'});
+  el.addEventListener('mouseleave',()=>{cur.style.width='8px';cur.style.height='8px';cur.style.background='var(--o)';ring.style.width='32px';ring.style.height='32px';ring.style.borderColor='rgba(255,94,20,0.4)'});
+});
+
+// Scroll reveal
+const obs=new IntersectionObserver(entries=>entries.forEach((e,i)=>{if(e.isIntersecting)setTimeout(()=>e.target.classList.add('in'),i*80)}),{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// FAQ
+function toggleFaq(el){const item=el.parentElement,open=item.classList.contains('open');document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));if(!open)item.classList.add('open')}
+
+// Rotating bar title
+const statuses=['EXECUTING MISSION','DEEP RESEARCH ACTIVE','PLANNING NEXT STEP','TOOLS CONNECTED','AGENT ONLINE'];
+let si=0;const bt=document.querySelector('.bar-title');
+bt.style.transition='opacity .3s';
+setInterval(()=>{si=(si+1)%statuses.length;bt.style.opacity='0';setTimeout(()=>{bt.textContent='LUXIOUS · '+statuses[si];bt.style.opacity='1'},300)},3000);
+</script>
+</body>
+</html>

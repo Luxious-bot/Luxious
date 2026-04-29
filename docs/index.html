@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUXIOUS — Autonomous Decision-Maker</title>
+<meta name="description" content="Luxious is an autonomous AI agent that connects tools, data, and apps into one seamless brain. Plans multi-step missions, researches deeply, executes without hand-holding.">
+<meta name="theme-color" content="#050705">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23050705'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%2300E676' stroke-width='2'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23FF5E14'/%3E%3C/svg%3E">
+
+<!-- OpenGraph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="LUXIOUS — Autonomous Decision-Maker">
+<meta property="og:description" content="Your autonomous AI agent. Plans, researches, and executes multi-step missions on Telegram. Zero hand-holding.">
+<meta property="og:url" content="https://luxious-bot.github.io/Luxious/">
+<meta property="og:image" content="https://luxious-bot.github.io/Luxious/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@LuxiousBot">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Barlow:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --o:#FF5E14;--o2:#FF8147;--o3:rgba(255,94,20,0.12);
+  --g:#00E676;--g2:#00FF87;--g3:rgba(0,230,118,0.1);
+  --bg:#050705;--bg2:#080D07;--s1:#0D140B;--s2:#131C10;
+  --wire:rgba(0,230,118,0.08);--wire-o:rgba(255,94,20,0.1);
+  --t:#D4EDCC;--td:#6B8F60;--tm:#2E4428;--white:#F0F7EC;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t);font-family:'DM Mono',monospace;font-size:14px;line-height:1.6;overflow-x:hidden;cursor:crosshair}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);pointer-events:none;z-index:9990}
+.cursor{position:fixed;width:8px;height:8px;border-radius:50%;background:var(--o);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .15s,height .15s,background .15s;mix-blend-mode:screen}
+.cursor-ring{position:fixed;width:32px;height:32px;border:1px solid rgba(255,94,20,0.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s,border-color .2s}
+.world-grid{position:fixed;inset:0;background-image:linear-gradient(var(--wire) 1px,transparent 1px),linear-gradient(90deg,var(--wire) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+
+/* === BOOT SPLASH === */
+.boot{position:fixed;inset:0;background:#000;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:'DM Mono',monospace;color:var(--g);transition:opacity .8s,visibility .8s;padding:40px}
+.boot.gone{opacity:0;visibility:hidden;pointer-events:none}
+.boot-logo{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,8vw,72px);letter-spacing:0.15em;color:var(--white);margin-bottom:36px;display:flex;align-items:center;gap:14px}
+.boot-logo span{color:var(--o)}
+.boot-bar{width:min(420px,80vw);height:2px;background:rgba(0,230,118,0.1);overflow:hidden;margin-bottom:24px;border-radius:2px}
+.boot-bar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--o),var(--g));transition:width 1.8s cubic-bezier(.6,0,.2,1)}
+.boot-log{font-size:11px;color:var(--td);letter-spacing:0.12em;text-align:center;min-height:18px}
+.boot-log b{color:var(--g)}
+
+/* === SCROLL PROGRESS === */
+.scroll-prog{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--o),var(--g));z-index:9995;transition:width .1s linear;pointer-events:none}
+
+/* === STATUS PILL === */
+.status-pill{position:fixed;bottom:20px;left:20px;background:rgba(13,20,11,0.9);backdrop-filter:blur(10px);border:1px solid rgba(0,230,118,0.2);padding:8px 14px;border-radius:999px;font-size:10px;letter-spacing:0.15em;color:var(--g);display:flex;align-items:center;gap:8px;z-index:200;text-transform:uppercase}
+.status-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--g2);animation:blink 1.4s infinite;box-shadow:0 0 6px var(--g2)}
+
+/* === BACK TO TOP === */
+.btt{position:fixed;bottom:20px;right:20px;width:44px;height:44px;background:var(--s1);border:1px solid rgba(255,94,20,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--o);cursor:pointer;z-index:200;opacity:0;visibility:hidden;transform:translateY(8px);transition:all .25s;font-size:18px;text-decoration:none}
+.btt.show{opacity:1;visibility:visible;transform:none}
+.btt:hover{background:var(--o);color:#000;border-color:var(--o)}
+
+/* === LANG TOGGLE === */
+.lang-toggle{display:flex;align-items:center;gap:6px;background:rgba(13,20,11,0.6);border:1px solid var(--wire);padding:4px;border-radius:999px;margin-right:18px}
+.lang-toggle button{background:transparent;border:0;color:var(--td);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;cursor:pointer;padding:5px 10px;border-radius:999px;transition:all .2s}
+.lang-toggle button.active{background:var(--o);color:#000}
+
+/* === NAV === */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;justify-content:space-between;padding:20px 56px;background:rgba(5,7,5,0.75);backdrop-filter:blur(24px);border-bottom:1px solid var(--wire)}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.12em;color:var(--white);text-decoration:none;display:flex;align-items:center;gap:10px}
+.logo-tag{background:var(--o);color:#000;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:0.2em;padding:3px 8px;border-radius:2px}
+.nav-right{display:flex;align-items:center;gap:14px}
+.nav-links{display:flex;align-items:center;gap:30px;list-style:none}
+.nav-links a{color:var(--td);text-decoration:none;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:var(--g)}
+.btn-launch{background:transparent;color:var(--g) !important;border:1px solid rgba(0,230,118,0.4) !important;padding:8px 22px;font-size:11px !important;letter-spacing:0.12em !important;transition:all .2s !important;border-radius:2px}
+.btn-launch:hover{background:var(--g3) !important;border-color:var(--g) !important}
+.hamburger{display:none;background:transparent;border:1px solid var(--wire);width:42px;height:38px;border-radius:2px;cursor:pointer;flex-direction:column;justify-content:center;align-items:center;gap:5px;padding:0}
+.hamburger span{width:18px;height:1.5px;background:var(--g);transition:all .25s}
+.hamburger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.mobile-drawer{position:fixed;top:0;right:-100%;width:min(320px,80vw);height:100vh;background:var(--bg2);border-left:1px solid var(--wire);z-index:600;padding:80px 32px 32px;display:flex;flex-direction:column;gap:28px;transition:right .35s ease;backdrop-filter:blur(20px)}
+.mobile-drawer.open{right:0}
+.mobile-drawer a{color:var(--t);text-decoration:none;font-family:'Barlow',sans-serif;font-weight:600;font-size:18px;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid var(--wire);padding-bottom:14px}
+.mobile-drawer a:last-child{border:0;background:var(--o);color:#000;padding:14px 24px;text-align:center;border-radius:2px;font-size:14px}
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:550;opacity:0;visibility:hidden;transition:all .3s}
+.drawer-overlay.open{opacity:1;visibility:visible}
+
+/* === HERO === */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;padding:140px 56px 80px;overflow:hidden;z-index:1}
+.hero-left{flex:1;max-width:680px}
+.hero-right{flex:0 0 400px;margin-left:auto}
+.hero-glow{position:absolute;top:10%;right:5%;width:600px;height:600px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,230,118,0.04) 0%,rgba(255,94,20,0.03) 50%,transparent 75%);pointer-events:none;animation:breathe 5s ease-in-out infinite}
+
+.agent-orb{width:340px;height:340px;position:relative;margin:0 auto}
+.orb-glow{position:absolute;inset:-40px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,230,118,0.05),transparent 70%);pointer-events:none}
+.orb-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(0,230,118,0.12);animation:spin 12s linear infinite}
+.orb-ring::before{content:'';position:absolute;top:-3px;left:50%;width:6px;height:6px;border-radius:50%;background:var(--g);transform:translateX(-50%);box-shadow:0 0 12px var(--g2)}
+.orb-ring2{position:absolute;inset:20px;border-radius:50%;border:1px solid rgba(255,94,20,0.15);animation:spin 8s linear infinite reverse}
+.orb-ring2::before{content:'';position:absolute;bottom:-3px;left:50%;width:5px;height:5px;border-radius:50%;background:var(--o);transform:translateX(-50%);box-shadow:0 0 10px var(--o2)}
+.orb-core{position:absolute;inset:50px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,130,70,0.15),rgba(0,230,118,0.08) 60%,transparent 80%);border:1px solid rgba(0,230,118,0.2);animation:breathe 3s ease-in-out infinite}
+.data-node{position:absolute;background:var(--s1);border:1px solid var(--wire);padding:8px 14px;border-radius:2px;font-size:10px;letter-spacing:0.1em;white-space:nowrap;animation:floatNode 4s ease-in-out infinite}
+.data-node.n1{top:10px;left:-60px;color:var(--g);animation-delay:0s}
+.data-node.n2{top:60px;right:-70px;color:var(--o);animation-delay:.8s}
+.data-node.n3{bottom:80px;left:-50px;color:var(--td);animation-delay:1.6s}
+.data-node.n4{bottom:20px;right:-80px;color:var(--g);animation-delay:2.4s}
+.orb-status{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--g);letter-spacing:0.15em;margin-top:36px;justify-content:center}
+.orb-pulse{width:8px;height:8px;border-radius:50%;background:var(--g2);box-shadow:0 0 8px var(--g2);animation:blink 1.4s ease-in-out infinite}
+
+@keyframes floatNode{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.04);opacity:1}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes slideIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--o);margin-bottom:28px;opacity:0;animation:slideIn .6s .1s ease forwards}
+.hero-eyebrow span{display:inline-block;width:32px;height:1px;background:var(--o)}
+h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,9vw,110px);line-height:.92;letter-spacing:0.03em;margin-bottom:32px;opacity:0;animation:slideIn .6s .2s ease forwards}
+h1 .w1{color:var(--white);display:block}
+h1 .w2{color:var(--o);display:block}
+h1 .w3{color:var(--g);display:block;position:relative}
+h1 .w3.glitch::before,h1 .w3.glitch::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;color:var(--g)}
+h1 .w3.glitch::before{animation:glitch1 2.6s infinite;color:var(--o);clip-path:inset(0 0 70% 0)}
+h1 .w3.glitch::after{animation:glitch2 3.2s infinite;color:var(--g2);clip-path:inset(70% 0 0 0)}
+@keyframes glitch1{0%,90%,100%{transform:none;opacity:0}92%{transform:translate(2px,-1px);opacity:.8}94%{transform:translate(-2px,1px);opacity:.8}96%{transform:translate(1px,1px);opacity:.6}98%{transform:none;opacity:0}}
+@keyframes glitch2{0%,88%,100%{transform:none;opacity:0}90%{transform:translate(-1px,2px);opacity:.6}94%{transform:translate(2px,-2px);opacity:.6}97%{transform:none;opacity:0}}
+
+.hero-desc{max-width:520px;font-family:'Barlow',sans-serif;font-size:17px;font-weight:300;color:var(--td);line-height:1.8;margin-bottom:44px;border-left:2px solid var(--o);padding-left:20px;opacity:0;animation:slideIn .6s .3s ease forwards}
+.hero-desc strong{color:var(--white);font-weight:500}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;opacity:0;animation:slideIn .6s .4s ease forwards}
+.btn-main{background:var(--o);color:#000;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;padding:14px 30px;text-decoration:none;border-radius:2px;border:2px solid var(--o);transition:all .25s;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.btn-main:hover{background:transparent;color:var(--o)}
+.btn-ghost{background:transparent;color:var(--g);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;padding:14px 28px;text-decoration:none;border-radius:2px;border:1px solid rgba(0,230,118,0.25);transition:all .25s;cursor:pointer}
+.btn-ghost:hover{border-color:var(--g);background:var(--g3)}
+.hero-stats{display:flex;gap:40px;margin-top:56px;padding-top:40px;border-top:1px solid var(--wire);opacity:0;animation:slideIn .6s .5s ease forwards;flex-wrap:wrap}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:0.05em;color:var(--white);line-height:1}
+.stat-val span{color:var(--o)}
+.stat-lbl{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--tm);margin-top:4px}
+
+/* === SECTIONS === */
+section{position:relative;z-index:1}
+.sec{max-width:1200px;margin:0 auto;padding:100px 56px}
+.sec-tag{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--o);margin-bottom:52px;display:flex;align-items:center;gap:14px}
+.sec-tag::before{content:'';display:block;width:24px;height:1px;background:var(--o)}
+.sec-tag::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--wire-o),transparent);max-width:120px}
+h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,64px);line-height:1;letter-spacing:0.04em;margin-bottom:16px}
+.h2-sub{font-family:'Barlow',sans-serif;font-size:16px;font-weight:300;color:var(--td);max-width:500px;line-height:1.7}
+
+/* === MISSION TICKER === */
+.ticker{background:var(--bg2);border-top:1px solid var(--wire);border-bottom:1px solid var(--wire);overflow:hidden;padding:14px 0;position:relative;z-index:2}
+.ticker::before,.ticker::after{content:'';position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
+.ticker::before{left:0;background:linear-gradient(90deg,var(--bg2),transparent)}
+.ticker::after{right:0;background:linear-gradient(-90deg,var(--bg2),transparent)}
+.ticker-track{display:flex;gap:42px;white-space:nowrap;animation:tickerScroll 50s linear infinite;width:max-content}
+.ticker:hover .ticker-track{animation-play-state:paused}
+.tick-item{display:inline-flex;align-items:center;gap:10px;font-size:11px;letter-spacing:0.08em;color:var(--td)}
+.tick-item .ti-dot{width:6px;height:6px;border-radius:50%;background:var(--g)}
+.tick-item .ti-tag{font-size:9px;color:var(--o);letter-spacing:0.18em;text-transform:uppercase;padding:2px 8px;border:1px solid rgba(255,94,20,0.2);border-radius:2px}
+.tick-item .ti-time{color:var(--tm);font-size:10px}
+@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* === CAPABILITIES === */
+.cap-bg{background:var(--bg2)}
+.cap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--wire);border:1px solid var(--wire);margin-top:60px}
+.cap-card{background:var(--bg2);padding:44px 36px;transition:background .3s;position:relative;overflow:hidden}
+.cap-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--o),var(--g));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.cap-card:hover{background:var(--s1)}
+.cap-card:hover::before{transform:scaleX(1)}
+.cap-num{font-family:'Bebas Neue',sans-serif;font-size:72px;color:var(--tm);line-height:1;margin-bottom:20px}
+.cap-card:nth-child(odd) .cap-num{color:rgba(255,94,20,0.18)}
+.cap-card:nth-child(even) .cap-num{color:rgba(0,230,118,0.12)}
+.cap-icon{font-size:24px;margin-bottom:14px;display:block}
+.cap-card h3{font-family:'Barlow',sans-serif;font-weight:700;font-size:17px;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:10px;color:var(--white)}
+.cap-card p{font-size:13px;color:var(--td);line-height:1.7}
+.cap-tag{display:inline-flex;align-items:center;gap:6px;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;margin-top:18px;color:var(--g)}
+.cap-tag::before{content:'→';color:var(--o)}
+
+/* === MISSION FLOW === */
+.flow-sec{background:var(--bg)}
+.mission-demo{margin-top:60px;border:1px solid var(--wire);border-radius:4px;overflow:hidden;background:var(--s1)}
+.mission-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--s2);border-bottom:1px solid var(--wire)}
+.bar-left{display:flex;align-items:center;gap:10px}
+.bar-dot{width:8px;height:8px;border-radius:50%}
+.bar-dot.r{background:#FF5F56}.bar-dot.y{background:#FFBD2E}.bar-dot.g{background:var(--g)}
+.bar-title{font-size:11px;letter-spacing:0.1em;color:var(--td);transition:opacity .3s}
+.bar-status{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--g);letter-spacing:0.12em}
+.bar-pulse{width:7px;height:7px;border-radius:50%;background:var(--g2);animation:blink 1.2s infinite}
+.mission-body{padding:32px 40px;display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.mission-steps{display:flex;flex-direction:column}
+.m-step{display:flex;gap:16px;padding:18px 0;border-bottom:1px solid var(--wire);align-items:flex-start}
+.m-step:last-child{border-bottom:none}
+.m-ico{width:32px;height:32px;flex-shrink:0;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.m-ico.done{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--g)}
+.m-ico.active{background:rgba(255,94,20,0.12);border:1px solid rgba(255,94,20,0.4);color:var(--o)}
+.m-ico.wait{background:var(--s2);border:1px solid var(--wire);color:var(--tm)}
+.m-info h4{font-size:13px;font-weight:500;color:var(--white);margin-bottom:4px;letter-spacing:0.04em}
+.m-info p{font-size:11px;color:var(--td);line-height:1.6}
+.m-badge{font-size:9px;letter-spacing:0.15em;padding:2px 8px;border-radius:999px;display:inline-block;margin-top:6px}
+.m-badge.done{background:rgba(0,230,118,0.08);color:var(--g);border:1px solid rgba(0,230,118,0.2)}
+.m-badge.active{background:rgba(255,94,20,0.1);color:var(--o);border:1px solid rgba(255,94,20,0.3)}
+.m-badge.pend{background:var(--s2);color:var(--tm);border:1px solid var(--wire)}
+.mission-output{display:flex;flex-direction:column;gap:16px}
+.out-header{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--o);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.out-header::after{content:'';flex:1;height:1px;background:var(--wire-o)}
+.out-block{background:var(--bg2);border:1px solid var(--wire);border-radius:2px;padding:16px 20px;font-size:12px}
+.out-block .label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--td);margin-bottom:10px}
+.out-result{color:var(--white);line-height:1.7}
+.out-result .hi-o{color:var(--o)}.out-result .hi-g{color:var(--g)}
+.out-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:10px;padding:3px 10px;border-radius:999px;letter-spacing:0.08em}
+.chip.o{background:rgba(255,94,20,0.1);color:var(--o);border:1px solid rgba(255,94,20,0.2)}
+.chip.g{background:rgba(0,230,118,0.08);color:var(--g);border:1px solid rgba(0,230,118,0.15)}
+
+/* === SIMULATOR === */
+.sim-sec{background:var(--bg2)}
+.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:60px}
+.sim-input{background:var(--s1);border:1px solid var(--wire);border-radius:4px;padding:32px}
+.sim-label{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--o);margin-bottom:16px;display:block}
+.sim-templates{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.sim-tpl{font-size:11px;color:var(--td);background:var(--s2);border:1px solid var(--wire);padding:6px 12px;border-radius:999px;cursor:pointer;transition:all .2s}
+.sim-tpl:hover{border-color:var(--g);color:var(--g);background:var(--g3)}
+.sim-tpl.active{border-color:var(--o);color:var(--o);background:var(--o3)}
+.sim-textarea{width:100%;background:var(--bg);border:1px solid var(--wire);border-radius:2px;color:var(--white);font-family:'DM Mono',monospace;font-size:13px;padding:16px;resize:vertical;min-height:120px;transition:border-color .2s;line-height:1.6}
+.sim-textarea:focus{outline:none;border-color:var(--o)}
+.sim-actions{display:flex;gap:10px;margin-top:18px;align-items:center}
+.sim-go{flex:1}
+.sim-clear{background:transparent;color:var(--td);border:1px solid var(--wire);padding:13px 18px;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all .2s;font-family:'DM Mono',monospace}
+.sim-clear:hover{color:var(--o);border-color:var(--o)}
+.sim-output{background:var(--s1);border:1px solid var(--wire);border-radius:4px;padding:32px;display:flex;flex-direction:column;min-height:380px}
+.sim-out-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--tm);text-align:center;gap:14px;font-size:12px;letter-spacing:0.1em}
+.sim-out-empty .empty-orb{width:60px;height:60px;border-radius:50%;border:1px dashed var(--wire);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--tm)}
+.sim-log{flex:1;display:flex;flex-direction:column;gap:10px;font-size:12px;line-height:1.7;max-height:340px;overflow-y:auto;padding-right:8px}
+.sim-log::-webkit-scrollbar{width:4px}.sim-log::-webkit-scrollbar-thumb{background:var(--wire)}
+.sim-line{display:flex;gap:10px;align-items:flex-start;animation:slideIn .3s ease}
+.sim-line .ts{color:var(--tm);font-size:10px;flex-shrink:0;padding-top:2px;font-family:'DM Mono',monospace}
+.sim-line .ic{flex-shrink:0;width:18px;text-align:center;color:var(--g)}
+.sim-line .msg{color:var(--t)}
+.sim-line.err .ic,.sim-line.err .msg{color:var(--o)}
+.sim-line.done .ic{color:var(--g2)}
+.sim-final{margin-top:14px;padding:14px;background:var(--bg);border:1px solid rgba(0,230,118,0.3);border-radius:2px;color:var(--g);font-size:12px;display:flex;align-items:center;gap:10px;animation:slideIn .4s ease}
+
+/* === COMPARE === */
+.cmp-sec{background:var(--bg)}
+.cmp-table{margin-top:60px;border:1px solid var(--wire);border-radius:4px;overflow:hidden;background:var(--s1)}
+.cmp-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;border-bottom:1px solid var(--wire)}
+.cmp-row:last-child{border-bottom:none}
+.cmp-row.head{background:var(--s2);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--td)}
+.cmp-cell{padding:16px 20px;border-right:1px solid var(--wire);display:flex;align-items:center;font-size:13px}
+.cmp-cell:last-child{border-right:none}
+.cmp-cell.feat{color:var(--white);font-weight:500;text-align:left;justify-content:flex-start}
+.cmp-cell.lux{background:rgba(255,94,20,0.05);color:var(--o);font-weight:500;justify-content:center}
+.cmp-cell:not(.feat):not(.lux){justify-content:center;color:var(--td)}
+.cmp-mark{font-size:18px}
+.cmp-mark.y{color:var(--g)}
+.cmp-mark.n{color:#5a3a3a}
+.cmp-mark.p{color:var(--o)}
+.cmp-row.head .cmp-cell.lux{background:var(--o);color:#000;font-weight:700;letter-spacing:0.18em}
+
+/* === TOOLS === */
+.tools-sec{background:var(--bg2)}
+.tools-flex{display:flex;gap:60px;align-items:flex-start;margin-top:60px}
+.tools-left{flex:1}
+.tools-right{flex:0 0 380px}
+.tool-list{display:flex;flex-direction:column}
+.tool-item{display:flex;align-items:center;gap:18px;padding:20px 0;border-bottom:1px solid var(--wire);transition:all .3s;cursor:default}
+.tool-item:hover .tool-icon-wrap{border-color:var(--o)}
+.tool-item:hover .tool-name{color:var(--o)}
+.tool-icon-wrap{width:44px;height:44px;flex-shrink:0;border:1px solid var(--wire);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:20px;transition:border-color .3s}
+.tool-name{font-family:'Barlow',sans-serif;font-weight:600;font-size:15px;color:var(--white);letter-spacing:0.04em;transition:color .3s}
+.tool-desc{font-size:12px;color:var(--td);margin-top:2px}
+.tool-status{margin-left:auto;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;padding:3px 10px;border-radius:999px}
+.ts-active{background:rgba(0,230,118,0.08);color:var(--g);border:1px solid rgba(0,230,118,0.2)}
+.ts-soon{background:rgba(255,94,20,0.08);color:var(--o);border:1px solid rgba(255,94,20,0.2)}
+.tools-right-box{background:var(--s1);border:1px solid var(--wire);border-radius:4px;padding:32px 28px;position:sticky;top:100px}
+.trb-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.08em;color:var(--white);margin-bottom:6px}
+.trb-sub{font-size:12px;color:var(--td);margin-bottom:24px}
+.conn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.conn-item{background:var(--s2);border:1px solid var(--wire);border-radius:2px;padding:12px 8px;text-align:center;font-size:18px;transition:all .3s;cursor:default}
+.conn-item:hover{border-color:var(--g);background:var(--g3)}
+.conn-item span{display:block;font-size:9px;letter-spacing:0.1em;color:var(--tm);margin-top:4px}
+
+/* === USE CASES === */
+.use-sec{background:var(--bg)}
+.use-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:60px}
+.use-card{background:var(--s1);border:1px solid var(--wire);border-radius:4px;padding:36px;transition:all .3s;position:relative;overflow:hidden}
+.use-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--o),transparent);transform:scaleX(0);transition:transform .4s}
+.use-card:hover{background:var(--s2)}
+.use-card:hover::after{transform:scaleX(1)}
+.use-num{font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;margin-bottom:16px}
+.use-card:nth-child(odd) .use-num{color:rgba(255,94,20,0.2)}
+.use-card:nth-child(even) .use-num{color:rgba(0,230,118,0.15)}
+.use-card h3{font-family:'Barlow',sans-serif;font-weight:700;font-size:18px;letter-spacing:0.04em;text-transform:uppercase;color:var(--white);margin-bottom:10px}
+.use-card p{font-size:13px;color:var(--td);line-height:1.7}
+.use-steps{display:flex;flex-direction:column;gap:8px;margin-top:20px}
+.use-step{display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--td)}
+.use-step::before{content:'→';color:var(--g);flex-shrink:0;margin-top:1px}
+
+/* === TESTIMONIALS === */
+.test-sec{background:var(--bg2)}
+.test-wrap{margin-top:60px;position:relative;overflow:hidden;border:1px solid var(--wire);border-radius:4px;background:var(--s1);padding:48px 40px}
+.test-track{display:flex;transition:transform .6s cubic-bezier(.4,0,.2,1)}
+.test-card{flex:0 0 100%;display:flex;gap:32px;align-items:flex-start}
+.test-mark{font-family:'Bebas Neue',sans-serif;font-size:96px;color:var(--o);line-height:.8;flex-shrink:0}
+.test-content{flex:1}
+.test-quote{font-family:'Barlow',sans-serif;font-size:18px;font-weight:300;color:var(--white);line-height:1.7;margin-bottom:24px;font-style:italic}
+.test-author{display:flex;align-items:center;gap:14px}
+.test-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--o),var(--g));display:flex;align-items:center;justify-content:center;color:#000;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.08em}
+.test-meta strong{color:var(--white);font-family:'Barlow',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.04em;display:block}
+.test-meta span{color:var(--td);font-size:11px;letter-spacing:0.1em}
+.test-nav{display:flex;justify-content:center;gap:8px;margin-top:32px}
+.test-dot{width:8px;height:8px;border-radius:50%;background:var(--wire);cursor:pointer;transition:all .3s;border:0;padding:0}
+.test-dot.active{background:var(--o);width:24px;border-radius:4px}
+
+/* === PRICING === */
+.price-sec{background:var(--bg)}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:60px}
+.p-card{border:1px solid var(--wire);background:var(--bg2);padding:44px 32px;border-radius:4px;position:relative;transition:all .3s}
+.p-card:hover{background:var(--s1)}
+.p-card.hot{border-color:rgba(255,94,20,0.4);background:var(--s1)}
+.p-hot-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--o);color:#000;font-size:9px;font-weight:700;letter-spacing:0.2em;padding:4px 16px;border-radius:999px;text-transform:uppercase}
+.p-tier{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--td);margin-bottom:10px}
+.p-price{font-family:'Bebas Neue',sans-serif;font-size:60px;line-height:1;letter-spacing:0.02em;margin-bottom:4px}
+.p-card:nth-child(2) .p-price{color:var(--o)}
+.p-card:not(:nth-child(2)) .p-price{color:var(--g)}
+.p-per{font-size:11px;color:var(--tm);margin-bottom:32px}
+.p-features{list-style:none;margin-bottom:36px}
+.p-features li{display:flex;align-items:flex-start;gap:10px;padding:9px 0;font-size:13px;color:var(--td);border-bottom:1px solid var(--wire)}
+.p-features li::before{content:'◆';font-size:7px;color:var(--g);flex-shrink:0;margin-top:4px}
+.p-card.hot .p-features li::before{color:var(--o)}
+.p-btn{display:block;text-align:center;padding:13px;border-radius:2px;text-decoration:none;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;transition:all .2s}
+.pb-free{border:1px solid var(--wire);color:var(--td)}
+.pb-free:hover{border-color:var(--g);color:var(--g);background:var(--g3)}
+.pb-pro{background:var(--o);color:#000}
+.pb-pro:hover{background:var(--o2)}
+.pb-team{border:1px solid var(--wire);color:var(--td)}
+.pb-team:hover{border-color:var(--g);color:var(--g);background:var(--g3)}
+
+/* === ROADMAP === */
+.road-sec{background:var(--bg2)}
+.road-list{margin-top:60px}
+.road-item{display:grid;grid-template-columns:180px 48px 1fr;gap:0 16px;padding:24px 0;border-bottom:1px solid var(--wire);align-items:start}
+.rd-date{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--td);padding-top:4px}
+.rd-node{display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.rd-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--tm)}
+.rd-dot.done{background:var(--g);border-color:var(--g)}
+.rd-dot.now{background:var(--o);border-color:var(--o);animation:pulseO 1.5s infinite}
+@keyframes pulseO{0%,100%{box-shadow:0 0 0 0 rgba(255,94,20,.5)}50%{box-shadow:0 0 0 7px rgba(255,94,20,0)}}
+.rd-content h3{font-family:'Barlow',sans-serif;font-weight:700;font-size:16px;letter-spacing:0.05em;text-transform:uppercase;color:var(--white);margin-bottom:6px}
+.rd-content p{font-size:12px;color:var(--td);max-width:480px;line-height:1.7}
+.rd-chip{display:inline-block;margin-top:8px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;padding:3px 10px;border-radius:999px}
+.rc-done{background:rgba(0,230,118,0.08);color:var(--g);border:1px solid rgba(0,230,118,0.15)}
+.rc-now{background:rgba(255,94,20,0.1);color:var(--o);border:1px solid rgba(255,94,20,0.25)}
+.rc-plan{background:var(--s1);color:var(--tm);border:1px solid var(--wire)}
+
+/* === FAQ === */
+.faq-sec{background:var(--bg)}
+.faq-wrap{max-width:740px;margin-top:60px}
+.faq-item{border-bottom:1px solid var(--wire)}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:22px 0;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:600;font-size:16px;color:var(--white);transition:color .2s;user-select:none}
+.faq-q:hover{color:var(--o)}
+.faq-plus{width:28px;height:28px;flex-shrink:0;border:1px solid var(--wire);border-radius:2px;display:flex;align-items:center;justify-content:center;color:var(--o);font-size:18px;transition:transform .3s,background .2s}
+.faq-item.open .faq-plus{transform:rotate(45deg);background:rgba(255,94,20,0.1)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease;font-size:13px;color:var(--td);line-height:1.8}
+.faq-item.open .faq-a{max-height:240px;padding-bottom:22px}
+
+/* === NEWSLETTER === */
+.news-sec{background:var(--bg2);border-top:1px solid var(--wire);border-bottom:1px solid var(--wire)}
+.news-wrap{max-width:760px;margin:0 auto;padding:80px 56px;text-align:center}
+.news-eyebrow{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--g);margin-bottom:18px}
+.news-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,44px);color:var(--white);margin-bottom:14px;letter-spacing:0.04em}
+.news-title span{color:var(--o)}
+.news-sub{color:var(--td);font-family:'Barlow',sans-serif;font-weight:300;font-size:15px;margin-bottom:32px}
+.news-form{display:flex;gap:10px;max-width:480px;margin:0 auto;flex-wrap:wrap}
+.news-input{flex:1;min-width:200px;background:var(--s1);border:1px solid var(--wire);color:var(--white);padding:14px 18px;font-family:'DM Mono',monospace;font-size:13px;border-radius:2px;transition:border-color .2s}
+.news-input:focus{outline:none;border-color:var(--o)}
+.news-btn{background:var(--g);color:#000;border:0;padding:14px 28px;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all .2s}
+.news-btn:hover{background:var(--g2)}
+.news-success{display:none;background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.3);color:var(--g);padding:14px 22px;border-radius:2px;font-size:12px;letter-spacing:0.08em;margin-top:18px;animation:slideIn .4s ease}
+.news-success.show{display:inline-block}
+
+/* === CONNECT === */
+.connect-sec{background:var(--bg)}
+.conn-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--wire);border:1px solid var(--wire);margin-top:60px}
+.conn-card{background:var(--bg);padding:44px 32px;text-decoration:none;color:var(--t);transition:background .3s;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden}
+.conn-card::before{content:'↗';position:absolute;top:22px;right:28px;color:var(--tm);font-size:18px;transition:color .3s,transform .3s}
+.conn-card:hover{background:var(--s1)}
+.conn-card:hover::before{color:var(--o);transform:translate(2px,-2px)}
+.cc-icon{font-size:32px;margin-bottom:6px}
+.cc-type{font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--o)}
+.cc-title{font-family:'Barlow',sans-serif;font-weight:700;font-size:17px;color:var(--white);letter-spacing:0.04em}
+.cc-desc{font-size:12px;color:var(--td)}
+
+/* === FINAL CTA === */
+.final-cta{background:var(--bg2);border-top:1px solid var(--wire);text-align:center;overflow:hidden;position:relative}
+.final-inner{max-width:720px;margin:0 auto;padding:130px 40px;position:relative}
+.final-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(255,94,20,0.06),rgba(0,230,118,0.04) 45%,transparent 70%);pointer-events:none}
+.final-label{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--g);margin-bottom:24px;display:flex;align-items:center;justify-content:center;gap:8px}
+.fl-dot{width:6px;height:6px;border-radius:50%;background:var(--g2);animation:blink 1.2s infinite}
+.final-inner h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,6vw,72px);line-height:1;margin-bottom:16px;position:relative}
+.final-inner p{font-family:'Barlow',sans-serif;font-weight:300;font-size:16px;color:var(--td);margin-bottom:44px;position:relative}
+
+/* === FOOTER === */
+footer{background:var(--bg);border-top:1px solid var(--wire);padding:44px 56px;position:relative;z-index:1}
+.foot-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.foot-logo{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.12em;color:var(--white)}
+.foot-logo span{color:var(--o)}
+.foot-sub{font-size:11px;color:var(--tm);margin-top:2px;letter-spacing:0.08em}
+.foot-links{display:flex;gap:24px;flex-wrap:wrap}
+.foot-links a{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--tm);text-decoration:none;transition:color .2s;cursor:pointer}
+.foot-links a:hover{color:var(--g)}
+.foot-social{display:flex;gap:10px}
+.foot-social a{width:36px;height:36px;border:1px solid var(--wire);border-radius:2px;display:flex;align-items:center;justify-content:center;color:var(--td);text-decoration:none;font-size:14px;transition:all .2s}
+.foot-social a:hover{border-color:var(--o);color:var(--o);background:rgba(255,94,20,0.06)}
+.foot-copy{width:100%;text-align:center;font-size:10px;color:var(--tm);padding-top:28px;margin-top:12px;border-top:1px solid var(--wire);letter-spacing:0.08em}
+
+/* === EASTER EGG TOAST === */
+.toast{position:fixed;bottom:80px;left:50%;transform:translate(-50%,20px);background:var(--s1);border:1px solid rgba(255,94,20,0.4);padding:16px 26px;border-radius:4px;color:var(--o);font-size:12px;letter-spacing:0.1em;text-transform:uppercase;z-index:300;opacity:0;transition:all .35s;pointer-events:none;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* === reveal === */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .55s ease,transform .55s ease}
+.reveal.in{opacity:1;transform:none}
+
+@media(max-width:900px){
+  nav{padding:16px 20px}
+  .nav-links{display:none}
+  .hamburger{display:flex}
+  .lang-toggle{display:none}
+  .hero{flex-direction:column;padding:120px 20px 60px}
+  .hero-right{width:100%;max-width:280px;margin:40px auto 0}
+  .agent-orb{width:260px;height:260px}
+  .orb-core{inset:40px}
+  .data-node{display:none}
+  .cap-grid,.price-grid,.conn-cards,.use-grid,.sim-grid{grid-template-columns:1fr}
+  .mission-body{grid-template-columns:1fr}
+  .tools-flex{flex-direction:column}
+  .tools-right{display:none}
+  .road-item{grid-template-columns:90px 32px 1fr}
+  .sec{padding:60px 20px}
+  footer{padding:36px 20px}
+  .news-wrap{padding:60px 20px}
+  .test-card{flex-direction:column;gap:12px}
+  .test-mark{font-size:60px}
+  .cmp-row{grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;font-size:11px}
+  .cmp-cell{padding:12px 8px;font-size:11px}
+  .status-pill{font-size:9px;padding:6px 10px}
+  body{cursor:default}
+  .cursor,.cursor-ring{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- BOOT SPLASH -->
+<div class="boot" id="boot">
+  <div class="boot-logo">LUXIOUS<span>.</span></div>
+  <div class="boot-bar"><div class="boot-bar-fill" id="bootFill"></div></div>
+  <div class="boot-log" id="bootLog">▸ booting autonomous core...</div>
+</div>
+
+<!-- SCROLL PROGRESS -->
+<div class="scroll-prog" id="scrollProg"></div>
+
+<!-- DECORATIONS -->
+<div class="world-grid"></div>
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="ring"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">LUXIOUS <span class="logo-tag">AGENT</span></a>
+  <div class="nav-right">
+    <div class="lang-toggle" id="langToggle">
+      <button data-lang="en" class="active">EN</button>
+      <button data-lang="id">ID</button>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#capabilities" data-i18n="nav.cap">CAPABILITIES</a></li>
+      <li><a href="#mission" data-i18n="nav.mis">MISSIONS</a></li>
+      <li><a href="#simulator" data-i18n="nav.sim">SIMULATOR</a></li>
+      <li><a href="#pricing" data-i18n="nav.pri">PRICING</a></li>
+      <li><a href="#roadmap" data-i18n="nav.road">ROADMAP</a></li>
+      <li><a href="https://t.me/Luxious01_bot" class="btn-launch" target="_blank" data-i18n="nav.launch">ACTIVATE ↗</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- MOBILE DRAWER -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="mobile-drawer" id="mobileDrawer">
+  <a href="#capabilities" data-i18n="nav.cap">Capabilities</a>
+  <a href="#mission" data-i18n="nav.mis">Missions</a>
+  <a href="#simulator" data-i18n="nav.sim">Simulator</a>
+  <a href="#tools">Tools</a>
+  <a href="#pricing" data-i18n="nav.pri">Pricing</a>
+  <a href="#roadmap" data-i18n="nav.road">Roadmap</a>
+  <a href="#faq">FAQ</a>
+  <a href="https://t.me/Luxious01_bot" target="_blank">⚡ Activate Luxious</a>
+</aside>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-left">
+    <div class="hero-eyebrow"><span></span> <span data-i18n="hero.eye">AUTONOMOUS AI AGENT · ONLINE</span></div>
+    <h1>
+      <span class="w1" data-i18n="hero.h1">HELLO,</span>
+      <span class="w2" data-i18n="hero.h2">I'M</span>
+      <span class="w3 glitch" data-text="LUXIOUS." data-i18n="hero.h3">LUXIOUS.</span>
+    </h1>
+    <p class="hero-desc" data-i18n="hero.desc">
+      Your <strong>autonomous decision-maker</strong> that connects tools, data, and apps into one seamless brain. I plan multi-step missions, research deeply, and <strong>execute without hand-holding.</strong>
+    </p>
+    <div class="hero-ctas">
+      <a href="https://t.me/Luxious01_bot" class="btn-main" target="_blank"><span data-i18n="hero.cta1">⚡ ACTIVATE LUXIOUS</span></a>
+      <a href="#simulator" class="btn-ghost" data-i18n="hero.cta2">SEE IN ACTION →</a>
+    </div>
+    <div class="hero-stats">
+      <div><div class="stat-val" data-count="12480" data-suffix="+">0</div><div class="stat-lbl" data-i18n="stat1">MISSIONS COMPLETED</div></div>
+      <div><div class="stat-val" data-count="98" data-suffix="%">0</div><div class="stat-lbl" data-i18n="stat2">SUCCESS RATE</div></div>
+      <div><div class="stat-val" data-count="24" data-suffix="/7">0</div><div class="stat-lbl" data-i18n="stat3">ALWAYS ONLINE</div></div>
+      <div><div class="stat-val" data-count="0" data-suffix="%">0</div><div class="stat-lbl" data-i18n="stat4">HAND-HOLDING</div></div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="agent-orb">
+      <div class="orb-glow"></div>
+      <div class="orb-ring"></div>
+      <div class="orb-ring2"></div>
+      <div class="orb-core"></div>
+      <div class="data-node n1">● MISSION ACTIVE</div>
+      <div class="data-node n2">TOOLS: 12 LINKED</div>
+      <div class="data-node n3">DEPTH: 5 LAYERS</div>
+      <div class="data-node n4">EXEC: AUTONOMOUS</div>
+    </div>
+    <div class="orb-status"><span class="orb-pulse"></span> <span data-i18n="orb">LUXIOUS IS ONLINE AND READY</span></div>
+  </div>
+</section>
+
+<!-- LIVE TICKER -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<!-- CAPABILITIES -->
+<section id="capabilities" class="cap-bg">
+  <div class="sec">
+    <div class="sec-tag">// 01 — <span data-i18n="cap.tag">CORE CAPABILITIES</span></div>
+    <h2><span data-i18n="cap.h2a">WHAT I </span><span style="color:var(--o)" data-i18n="cap.h2b">DO.</span></h2>
+    <p class="h2-sub" data-i18n="cap.sub">Not a chatbot. Not a prompt machine. A fully autonomous agent that thinks, plans, and executes across your entire digital world.</p>
+    <div class="cap-grid">
+      <div class="cap-card reveal"><div class="cap-num">01</div><span class="cap-icon">🧠</span><h3 data-i18n="cap.1.t">MULTI-STEP PLANNING</h3><p data-i18n="cap.1.d">I decompose complex goals into executable sub-missions, sequencing them intelligently to reach your objective without constant direction.</p><div class="cap-tag">AUTONOMOUS REASONING</div></div>
+      <div class="cap-card reveal"><div class="cap-num">02</div><span class="cap-icon">🔍</span><h3 data-i18n="cap.2.t">DEEP RESEARCH</h3><p data-i18n="cap.2.d">I search, synthesize, and cross-reference across the web, documents, and live data sources — delivering insight, not just results.</p><div class="cap-tag">REAL-TIME INTEL</div></div>
+      <div class="cap-card reveal"><div class="cap-num">03</div><span class="cap-icon">⚡</span><h3 data-i18n="cap.3.t">TOOL EXECUTION</h3><p data-i18n="cap.3.d">APIs, databases, apps, files — I connect and orchestrate them all in one seamless pipeline. No switching tabs. No manual steps.</p><div class="cap-tag">ZERO FRICTION</div></div>
+      <div class="cap-card reveal"><div class="cap-num">04</div><span class="cap-icon">🔗</span><h3 data-i18n="cap.4.t">DATA UNIFICATION</h3><p data-i18n="cap.4.d">Your scattered data becomes one coherent intelligence layer. I bridge the gap between your tools, turning silos into a seamless brain.</p><div class="cap-tag">CONNECTED SYSTEMS</div></div>
+      <div class="cap-card reveal"><div class="cap-num">05</div><span class="cap-icon">🎯</span><h3 data-i18n="cap.5.t">DECISION MAKING</h3><p data-i18n="cap.5.d">I don't just surface options — I evaluate, prioritize, and act. Assign a mission and I'll make the calls that move things forward.</p><div class="cap-tag">AUTONOMOUS JUDGMENT</div></div>
+      <div class="cap-card reveal"><div class="cap-num">06</div><span class="cap-icon">🔄</span><h3 data-i18n="cap.6.t">SELF-CORRECTION</h3><p data-i18n="cap.6.d">When paths block, I reroute. When outputs miss, I iterate. No error is a dead end — just a signal to adapt and keep moving.</p><div class="cap-tag">ADAPTIVE LOOPS</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MISSION DEMO -->
+<section id="mission" class="flow-sec">
+  <div class="sec">
+    <div class="sec-tag">// 02 — <span data-i18n="mis.tag">LIVE MISSION DEMO</span></div>
+    <h2><span data-i18n="mis.h2a">A MISSION IN </span><span style="color:var(--g)" data-i18n="mis.h2b">MOTION.</span></h2>
+    <p class="h2-sub" data-i18n="mis.sub">Watch Luxious handle a real multi-step task from one simple instruction — no babysitting required.</p>
+    <div class="mission-demo reveal">
+      <div class="mission-bar">
+        <div class="bar-left"><div class="bar-dot r"></div><div class="bar-dot y"></div><div class="bar-dot g"></div><div class="bar-title">LUXIOUS · MISSION CONTROL</div></div>
+        <div class="bar-status"><span class="bar-pulse"></span> EXECUTING MISSION</div>
+      </div>
+      <div class="mission-body">
+        <div class="mission-steps">
+          <div class="m-step"><div class="m-ico done">✓</div><div class="m-info"><h4>PARSE OBJECTIVE</h4><p>Understood goal: "Research top AI tools for content creation and compile a report with pricing."</p><span class="m-badge done">COMPLETE</span></div></div>
+          <div class="m-step"><div class="m-ico done">✓</div><div class="m-info"><h4>DEEP RESEARCH</h4><p>Searched 24 sources, cross-referenced product pages, extracted feature data and pricing tiers.</p><span class="m-badge done">COMPLETE</span></div></div>
+          <div class="m-step"><div class="m-ico active">⟳</div><div class="m-info"><h4>SYNTHESIZE & RANK</h4><p>Scoring tools by capability, cost, and fit. Building structured comparison matrix now...</p><span class="m-badge active">IN PROGRESS</span></div></div>
+          <div class="m-step"><div class="m-ico wait">○</div><div class="m-info"><h4>GENERATE REPORT</h4><p>Will format findings into a clean, actionable document with recommendations.</p><span class="m-badge pend">QUEUED</span></div></div>
+          <div class="m-step"><div class="m-ico wait">○</div><div class="m-info"><h4>DELIVER OUTPUT</h4><p>Send final report directly to your Telegram with summary and download link.</p><span class="m-badge pend">QUEUED</span></div></div>
+        </div>
+        <div class="mission-output">
+          <div class="out-header">LIVE OUTPUT</div>
+          <div class="out-block"><div class="label">SOURCES ANALYZED</div><div class="out-result"><span class="hi-g">24</span> web sources · <span class="hi-o">8</span> product docs · <span class="hi-g">3</span> comparison sites</div><div class="out-chips"><span class="chip g">OpenAI</span><span class="chip g">Jasper</span><span class="chip g">Runway</span><span class="chip o">+21 more</span></div></div>
+          <div class="out-block"><div class="label">TOP FINDING SO FAR</div><div class="out-result"><span class="hi-o">7 tools</span> offer free tiers. <span class="hi-g">3 standouts</span> identified based on capability-to-cost ratio.</div></div>
+          <div class="out-block"><div class="label">ESTIMATED COMPLETION</div><div class="out-result"><span class="hi-g">~45 seconds</span> remaining — no input needed.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTERACTIVE SIMULATOR -->
+<section id="simulator" class="sim-sec">
+  <div class="sec">
+    <div class="sec-tag">// 03 — <span data-i18n="sim.tag">INTERACTIVE SIMULATOR</span></div>
+    <h2><span data-i18n="sim.h2a">TRY ME </span><span style="color:var(--o)" data-i18n="sim.h2b">RIGHT NOW.</span></h2>
+    <p class="h2-sub" data-i18n="sim.sub">Pick a template or write your own mission. Watch how I would plan and execute it — no signup needed.</p>
+    <div class="sim-grid">
+      <div class="sim-input reveal">
+        <span class="sim-label" data-i18n="sim.lbl1">▸ PICK A TEMPLATE</span>
+        <div class="sim-templates" id="simTemplates">
+          <button class="sim-tpl" data-tpl="research">🔍 Market research</button>
+          <button class="sim-tpl" data-tpl="content">📝 Write blog post</button>
+          <button class="sim-tpl" data-tpl="data">📊 Analyze CSV</button>
+          <button class="sim-tpl" data-tpl="brief">📋 Daily brief</button>
+          <button class="sim-tpl" data-tpl="trip">✈️ Plan a trip</button>
+        </div>
+        <span class="sim-label" data-i18n="sim.lbl2">▸ YOUR MISSION</span>
+        <textarea class="sim-textarea" id="simInput" placeholder="Describe what you want Luxious to do..."></textarea>
+        <div class="sim-actions">
+          <button class="btn-main sim-go" id="simGo">⚡ <span data-i18n="sim.run">RUN MISSION</span></button>
+          <button class="sim-clear" id="simClear" data-i18n="sim.clear">CLEAR</button>
+        </div>
+      </div>
+      <div class="sim-output reveal">
+        <div class="out-header">LUXIOUS LOG</div>
+        <div class="sim-out-empty" id="simEmpty">
+          <div class="empty-orb">▸</div>
+          <div data-i18n="sim.empty">PICK A TEMPLATE OR WRITE A MISSION<br>I'll show you exactly how I'd handle it.</div>
+        </div>
+        <div class="sim-log" id="simLog" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<section id="tools" class="tools-sec">
+  <div class="sec">
+    <div class="sec-tag">// 04 — <span data-i18n="tool.tag">CONNECTED TOOLS</span></div>
+    <h2><span data-i18n="tool.h2a">THE TOOLS </span><span style="color:var(--o)" data-i18n="tool.h2b">I WIELD.</span></h2>
+    <p class="h2-sub" data-i18n="tool.sub">I integrate with the apps and data sources you already use — and orchestrate them as one unified system.</p>
+    <div class="tools-flex">
+      <div class="tools-left">
+        <div class="tool-list">
+          <div class="tool-item reveal"><div class="tool-icon-wrap">🌐</div><div><div class="tool-name">WEB SEARCH & SCRAPING</div><div class="tool-desc">Real-time research across the open web with deep content extraction</div></div><span class="tool-status ts-active">LIVE</span></div>
+          <div class="tool-item reveal"><div class="tool-icon-wrap">📊</div><div><div class="tool-name">DATA ANALYSIS</div><div class="tool-desc">Process CSVs, spreadsheets, and databases — extract patterns and insights</div></div><span class="tool-status ts-active">LIVE</span></div>
+          <div class="tool-item reveal"><div class="tool-icon-wrap">📝</div><div><div class="tool-name">DOCUMENT GENERATION</div><div class="tool-desc">Create reports, summaries, briefs, and structured content automatically</div></div><span class="tool-status ts-active">LIVE</span></div>
+          <div class="tool-item reveal"><div class="tool-icon-wrap">🔔</div><div><div class="tool-name">TELEGRAM INTEGRATION</div><div class="tool-desc">Mission control via chat — assign tasks, receive results, stay updated</div></div><span class="tool-status ts-active">LIVE</span></div>
+          <div class="tool-item reveal"><div class="tool-icon-wrap">🗂️</div><div><div class="tool-name">FILE & STORAGE OPS</div><div class="tool-desc">Read, write, and manage files across cloud and local storage seamlessly</div></div><span class="tool-status ts-soon">SOON</span></div>
+          <div class="tool-item reveal"><div class="tool-icon-wrap">🔌</div><div><div class="tool-name">API ORCHESTRATION</div><div class="tool-desc">Chain external APIs into complex multi-step automated workflows</div></div><span class="tool-status ts-soon">SOON</span></div>
+        </div>
+      </div>
+      <div class="tools-right">
+        <div class="tools-right-box reveal">
+          <div class="trb-title">INTEGRATION HUB</div>
+          <div class="trb-sub">Apps Luxious connects to out of the box</div>
+          <div class="conn-grid">
+            <div class="conn-item">🔔<span>Telegram</span></div><div class="conn-item">🌐<span>Web</span></div><div class="conn-item">📄<span>Docs</span></div>
+            <div class="conn-item">📊<span>Sheets</span></div><div class="conn-item">📁<span>Drive</span></div><div class="conn-item">📧<span>Email</span></div>
+            <div class="conn-item">🔗<span>APIs</span></div><div class="conn-item">🗄️<span>DB</span></div><div class="conn-item">➕<span>More</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section class="cmp-sec">
+  <div class="sec">
+    <div class="sec-tag">// 05 — <span data-i18n="cmp.tag">HOW I COMPARE</span></div>
+    <h2><span data-i18n="cmp.h2a">WHY </span><span style="color:var(--o)" data-i18n="cmp.h2b">LUXIOUS?</span></h2>
+    <p class="h2-sub" data-i18n="cmp.sub">A side-by-side look at how Luxious stacks up against typical AI chat and manual workflows.</p>
+    <div class="cmp-table reveal">
+      <div class="cmp-row head">
+        <div class="cmp-cell feat" data-i18n="cmp.col0">CAPABILITY</div>
+        <div class="cmp-cell lux">LUXIOUS</div>
+        <div class="cmp-cell">CHAT AI</div>
+        <div class="cmp-cell">RPA TOOLS</div>
+        <div class="cmp-cell" data-i18n="cmp.col4">MANUAL</div>
+      </div>
+      <div class="cmp-row"><div class="cmp-cell feat" data-i18n="cmp.r1">Multi-step planning</div><div class="cmp-cell lux"><span class="cmp-mark">✓</span></div><div class="cmp-cell"><span class="cmp-mark p">~</span></div><div class="cmp-cell"><span class="cmp-mark p">~</span></div><div class="cmp-cell"><span class="cmp-mark y">✓</span></div></div>
+      <div class="cmp-row"><div class="cmp-cell feat" data-i18n="cmp.r2">Autonomous execution</div><div class="cmp-cell lux"><span class="cmp-mark">✓</span></div><div class="cmp-cell"><span class="cmp-mark n">✗</span></div><div class="cmp-cell"><span class="cmp-mark p">~</span></div><div class="cmp-cell"><span class="cmp-mark n">✗</span></div></div>
+      <div class="cmp-row"><div class="cmp-cell feat" data-i18n="cmp.r3">Real-time research</div><div class="cmp-cell lux"><span class="cmp-mark">✓</span></div><div class="cmp-cell"><span class="cmp-mark p">~</span></div><div class="cmp-cell"><span class="cmp-mark n">✗</span></div><div class="cmp-cell"><span class="cmp-mark y">✓</span></div></div>
+      <div class="cmp-row"><div class="cmp-cell feat" data-i18n="cmp.r4">Decision making</div><div class="cmp-cell lux"><span class="cmp-mark">✓</span></div><div class="cmp-cell"><span class="cmp-mark n">✗</span></div><div class="cmp-cell"><span class="cmp-mark n">✗</span></div><div class="cmp-cell"><span class="cmp-mark y">✓</span></div></div>
+      <div class="cmp-row"><div class="cmp-cell feat" data-i18n="cmp.r5">No coding required</div><div class="cmp-cell lux"><span class="cmp-mark">✓</span></div><div class="cmp-cell"><span class="cmp-mark y">✓</span></div><div class="cmp-cell"><span class="cmp-mark n">✗</span></div><div class="cmp-cell"><span class="cmp-mark y">✓</span></div></div>
+      <div class="cmp-row"><div class="cmp-cell feat" data-i18n="cmp.r6">24/7 always-on</div><div class="cmp-cell lux"><span class="cmp-mark">✓</span></div><div class="cmp-cell"><span class="cmp-mark p">~</span></div><div class="cmp-cell"><span class="cmp-mark y">✓</span></div><div class="cmp-cell"><span class="cmp-mark n">✗</span></div></div>
+      <div class="cmp-row"><div class="cmp-cell feat" data-i18n="cmp.r7">Self-correction on error</div><div class="cmp-cell lux"><span class="cmp-mark">✓</span></div><div class="cmp-cell"><span class="cmp-mark n">✗</span></div><div class="cmp-cell"><span class="cmp-mark n">✗</span></div><div class="cmp-cell"><span class="cmp-mark y">✓</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section class="use-sec">
+  <div class="sec">
+    <div class="sec-tag">// 06 — <span data-i18n="use.tag">USE CASES</span></div>
+    <h2><span data-i18n="use.h2a">WHAT YOU CAN </span><span style="color:var(--g)" data-i18n="use.h2b">ASSIGN ME.</span></h2>
+    <p class="h2-sub" data-i18n="use.sub">Give me a goal, not a step-by-step. I handle the rest.</p>
+    <div class="use-grid">
+      <div class="use-card reveal"><div class="use-num">01</div><h3 data-i18n="use.1.t">COMPETITIVE RESEARCH</h3><p data-i18n="use.1.d">Assign me a market or competitor — I'll research, compare, score, and deliver a structured intelligence brief.</p><div class="use-steps"><div class="use-step">Search 50+ sources autonomously</div><div class="use-step">Cross-reference pricing, features, reviews</div><div class="use-step">Deliver ranked analysis report</div></div></div>
+      <div class="use-card reveal"><div class="use-num">02</div><h3 data-i18n="use.2.t">CONTENT PRODUCTION</h3><p data-i18n="use.2.d">Give me a topic and target. I'll research, draft, structure, and finalize publication-ready content.</p><div class="use-steps"><div class="use-step">Research topic depth and angles</div><div class="use-step">Draft with SEO and audience context</div><div class="use-step">Deliver formatted, ready-to-publish output</div></div></div>
+      <div class="use-card reveal"><div class="use-num">03</div><h3 data-i18n="use.3.t">DATA PIPELINES</h3><p data-i18n="use.3.d">Connect your data sources and I'll clean, transform, analyze, and surface the insights that matter.</p><div class="use-steps"><div class="use-step">Ingest and normalize raw data</div><div class="use-step">Run pattern detection and anomaly checks</div><div class="use-step">Output structured insight reports</div></div></div>
+      <div class="use-card reveal"><div class="use-num">04</div><h3 data-i18n="use.4.t">WORKFLOW AUTOMATION</h3><p data-i18n="use.4.d">Describe a repeating task and I'll map it into an automated pipeline — saving you hours every week.</p><div class="use-steps"><div class="use-step">Map decision logic and triggers</div><div class="use-step">Build and test the automation loop</div><div class="use-step">Run silently on schedule, report results</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="test-sec">
+  <div class="sec">
+    <div class="sec-tag">// 07 — <span data-i18n="test.tag">USERS REPORT IN</span></div>
+    <h2><span data-i18n="test.h2a">FROM THE </span><span style="color:var(--g)" data-i18n="test.h2b">FIELD.</span></h2>
+    <p class="h2-sub" data-i18n="test.sub">What operators say after running missions with Luxious.</p>
+    <div class="test-wrap reveal">
+      <div class="test-track" id="testTrack">
+        <div class="test-card">
+          <div class="test-mark">"</div>
+          <div class="test-content">
+            <p class="test-quote" data-i18n="test.q1">I asked Luxious to research 30 competitors, compare pricing, and write a brief. It came back in 4 minutes with something that would've taken my analyst three days. I haven't gone back.</p>
+            <div class="test-author">
+              <div class="test-avatar">MR</div>
+              <div class="test-meta"><strong>Maya R.</strong><span>Founder · SaaS Startup</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="test-card">
+          <div class="test-mark">"</div>
+          <div class="test-content">
+            <p class="test-quote" data-i18n="test.q2">The thing that sold me was the planning. I dropped a vague goal and Luxious decomposed it into clean steps without asking. That's the part most agents get wrong.</p>
+            <div class="test-author">
+              <div class="test-avatar">DK</div>
+              <div class="test-meta"><strong>David K.</strong><span>Operations Lead</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="test-card">
+          <div class="test-mark">"</div>
+          <div class="test-content">
+            <p class="test-quote" data-i18n="test.q3">I run a one-person consultancy. Luxious handles the daily research, writes my client briefs, and pings me on Telegram when something needs my call. It's like having a senior associate for $9.</p>
+            <div class="test-author">
+              <div class="test-avatar">AS</div>
+              <div class="test-meta"><strong>Aisyah S.</strong><span>Independent Consultant</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="test-card">
+          <div class="test-mark">"</div>
+          <div class="test-content">
+            <p class="test-quote" data-i18n="test.q4">Most "AI agents" are wrappers. Luxious actually plans, fails, retries, and finishes. That self-correction loop is the real product.</p>
+            <div class="test-author">
+              <div class="test-avatar">JT</div>
+              <div class="test-meta"><strong>Jordan T.</strong><span>ML Engineer</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="test-nav" id="testNav"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="price-sec">
+  <div class="sec">
+    <div class="sec-tag">// 08 — <span data-i18n="pri.tag">PRICING</span></div>
+    <h2><span data-i18n="pri.h2a">SIMPLE PLANS. </span><span style="color:var(--o)" data-i18n="pri.h2b">FULL POWER.</span></h2>
+    <p class="h2-sub" data-i18n="pri.sub">Start free. Scale when ready.</p>
+    <div class="price-grid">
+      <div class="p-card reveal"><div class="p-tier">FREE AGENT</div><div class="p-price">$0</div><div class="p-per">FOREVER FREE</div><ul class="p-features"><li>10 missions / day</li><li>Web research & summaries</li><li>Basic planning depth</li><li>Telegram delivery</li></ul><a href="https://t.me/Luxious01_bot" class="p-btn pb-free" target="_blank">START FREE →</a></div>
+      <div class="p-card hot reveal"><div class="p-hot-badge">POPULAR</div><div class="p-tier">PRO AGENT</div><div class="p-price">$9</div><div class="p-per">BILLED MONTHLY</div><ul class="p-features"><li>Unlimited missions</li><li>Deep multi-step planning</li><li>All tool integrations</li><li>Document generation</li><li>Priority execution</li></ul><a href="https://t.me/Luxious01_bot" class="p-btn pb-pro" target="_blank">GO PRO →</a></div>
+      <div class="p-card reveal"><div class="p-tier">TEAM BRAIN</div><div class="p-price">$29</div><div class="p-per">UP TO 10 USERS</div><ul class="p-features"><li>Everything in Pro</li><li>Shared mission workspace</li><li>API access</li><li>Custom workflows</li><li>Dedicated support</li></ul><a href="https://t.me/Luxious01_bot" class="p-btn pb-team" target="_blank">GET TEAM →</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" class="road-sec">
+  <div class="sec">
+    <div class="sec-tag">// 09 — <span data-i18n="road.tag">ROADMAP</span></div>
+    <h2><span data-i18n="road.h2a">WHERE WE'RE </span><span style="color:var(--g)" data-i18n="road.h2b">HEADED.</span></h2>
+    <p class="h2-sub" data-i18n="road.sub">Luxious is evolving fast. Here's what's coming.</p>
+    <div class="road-list">
+      <div class="road-item reveal"><div class="rd-date">MARCH 2026</div><div class="rd-node"><div class="rd-dot done"></div></div><div class="rd-content"><h3>CORE AGENT LAUNCH</h3><p>Luxious launched publicly. Web research, multi-step planning, and Telegram delivery live for everyone.</p><span class="rd-chip rc-done">✓ COMPLETED</span></div></div>
+      <div class="road-item reveal"><div class="rd-date">APRIL 2026</div><div class="rd-node"><div class="rd-dot now"></div></div><div class="rd-content"><h3>PRO TIER & DEEP MISSIONS</h3><p>Unlimited missions, deeper planning layers, document generation, and priority processing go live.</p><span class="rd-chip rc-now">⟳ IN PROGRESS</span></div></div>
+      <div class="road-item reveal"><div class="rd-date">MAY 2026</div><div class="rd-node"><div class="rd-dot"></div></div><div class="rd-content"><h3>FILE & DOCUMENT OPS</h3><p>Upload PDFs, spreadsheets, and docs. Luxious reads, processes, and takes action on your files.</p><span class="rd-chip rc-plan">○ PLANNED</span></div></div>
+      <div class="road-item reveal"><div class="rd-date">JUNE 2026</div><div class="rd-node"><div class="rd-dot"></div></div><div class="rd-content"><h3>INTERACTIVE MISSION MODE</h3><p>Mid-mission collaboration. Steer, redirect, and query Luxious while a task is actively in progress.</p><span class="rd-chip rc-plan">○ PLANNED</span></div></div>
+      <div class="road-item reveal"><div class="rd-date">SEPT 2026</div><div class="rd-node"><div class="rd-dot"></div></div><div class="rd-content"><h3>APP INTEGRATIONS</h3><p>Native integrations with Notion, Google Workspace, Slack, Airtable, and 30+ productivity tools.</p><span class="rd-chip rc-plan">○ PLANNED</span></div></div>
+      <div class="road-item reveal"><div class="rd-date">DEC 2026</div><div class="rd-node"><div class="rd-dot"></div></div><div class="rd-content"><h3>LUXIOUS API & CUSTOM AGENTS</h3><p>Developer API launch. Build specialized agents on top of the Luxious autonomous decision layer.</p><span class="rd-chip rc-plan">○ PLANNED</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="faq-sec">
+  <div class="sec">
+    <div class="sec-tag">// 10 — <span data-i18n="faq.tag">FAQ</span></div>
+    <h2><span data-i18n="faq.h2a">QUESTIONS </span><span style="color:var(--o)" data-i18n="faq.h2b">ANSWERED.</span></h2>
+    <div class="faq-wrap">
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq.q1">What makes Luxious different from a regular chatbot?</span> <span class="faq-plus">+</span></div><div class="faq-a" data-i18n="faq.a1">Luxious is an autonomous agent — it doesn't just respond to prompts, it plans and executes multi-step missions. You assign a goal, and Luxious breaks it down, uses tools, makes decisions, and delivers a result. No back-and-forth required.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq.q2">How do I assign a mission to Luxious?</span> <span class="faq-plus">+</span></div><div class="faq-a" data-i18n="faq.a2">Simply open the Luxious bot on Telegram, describe your objective in natural language, and Luxious gets to work. You'll receive status updates and the final result delivered directly to your chat.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq.q3">What kinds of tasks can Luxious handle?</span> <span class="faq-plus">+</span></div><div class="faq-a" data-i18n="faq.a3">Research and competitive analysis, content creation, data processing, workflow automation, document generation, and multi-source information synthesis. If it can be broken into steps and executed with tools, Luxious can handle it.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq.q4">Does Luxious require me to stay online during a mission?</span> <span class="faq-plus">+</span></div><div class="faq-a" data-i18n="faq.a4">No. Luxious operates autonomously. Assign the mission, go do something else, and receive the completed output when it's done. That's the whole point — zero hand-holding.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq.q5">Is my data safe with Luxious?</span> <span class="faq-plus">+</span></div><div class="faq-a" data-i18n="faq.a5">Yes. Luxious processes your requests in isolated sessions and does not store personal mission data after completion. All connections are encrypted and we follow strict data handling policies.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span data-i18n="faq.q6">Can I cancel my Pro subscription anytime?</span> <span class="faq-plus">+</span></div><div class="faq-a" data-i18n="faq.a6">Absolutely. Cancel anytime directly through Telegram. Access continues until the end of your billing period with no extra charges or penalties.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section class="news-sec">
+  <div class="news-wrap">
+    <div class="news-eyebrow">▸ <span data-i18n="news.eye">MISSION DISPATCH · WEEKLY</span></div>
+    <h2 class="news-title"><span data-i18n="news.h2a">GET MISSION INTEL </span><span data-i18n="news.h2b">IN YOUR INBOX.</span></h2>
+    <p class="news-sub" data-i18n="news.sub">New features, agent strategies, and case studies. No spam, ever.</p>
+    <form class="news-form" id="newsForm" novalidate>
+      <input type="email" required class="news-input" id="newsInput" placeholder="agent@yourdomain.com" data-i18n-attr='{"placeholder":"news.ph"}'>
+      <button type="submit" class="news-btn" data-i18n="news.btn">SUBSCRIBE →</button>
+    </form>
+    <div class="news-success" id="newsSuccess">✓ <span data-i18n="news.ok">SUBSCRIBED · MISSION INTEL INCOMING</span></div>
+  </div>
+</section>
+
+<!-- CONNECT -->
+<section class="connect-sec">
+  <div class="sec">
+    <div class="sec-tag">// 11 — <span data-i18n="conn.tag">FIND LUXIOUS</span></div>
+    <h2><span data-i18n="conn.h2a">CONNECT WITH </span><span style="color:var(--g)" data-i18n="conn.h2b">THE AGENT.</span></h2>
+    <div class="conn-cards">
+      <a href="https://t.me/Luxious01_bot" class="conn-card reveal" target="_blank"><span class="cc-icon">✈️</span><span class="cc-type">TELEGRAM BOT</span><span class="cc-title">@LUXIOUS01_BOT</span><span class="cc-desc">Activate Luxious. Assign your first mission.</span></a>
+      <a href="https://github.com/Luxious-bot/Luxious" class="conn-card reveal" target="_blank"><span class="cc-icon">⌥</span><span class="cc-type">SOURCE CODE</span><span class="cc-title">GITHUB</span><span class="cc-desc">Open-source on github.com/Luxious-bot/Luxious</span></a>
+      <a href="https://x.com/LuxiousBot" class="conn-card reveal" target="_blank"><span class="cc-icon">𝕏</span><span class="cc-type">X / TWITTER</span><span class="cc-title">@LUXIOUSBOT</span><span class="cc-desc">Latest news, feature drops, and agent intel.</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="final-inner">
+    <div class="final-glow"></div>
+    <div class="final-label"><span class="fl-dot"></span> <span data-i18n="final.label">LUXIOUS IS ONLINE · READY TO EXECUTE</span></div>
+    <h2><span data-i18n="final.h2a">ASSIGN YOUR</span><br><span style="color:var(--o)" data-i18n="final.h2b">FIRST MISSION.</span></h2>
+    <p data-i18n="final.sub">No setup. No babysitting. Just results.</p>
+    <a href="https://t.me/Luxious01_bot" class="btn-main" target="_blank" style="display:inline-flex">⚡ <span data-i18n="final.btn">ACTIVATE ON TELEGRAM ↗</span></a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-inner">
+    <div>
+      <div class="foot-logo">LUXIOUS<span>BOT</span></div>
+      <div class="foot-sub">AUTONOMOUS DECISION-MAKER</div>
+    </div>
+    <div class="foot-links">
+      <a href="#capabilities">CAPABILITIES</a><a href="#mission">MISSIONS</a><a href="#simulator">SIMULATOR</a><a href="#pricing">PRICING</a><a href="#roadmap">ROADMAP</a><a href="#faq">FAQ</a>
+    </div>
+    <div class="foot-social">
+      <a href="https://x.com/LuxiousBot" target="_blank" title="X">𝕏</a>
+      <a href="https://t.me/Luxious01_bot" target="_blank" title="Telegram">✈</a>
+      <a href="https://github.com/Luxious-bot/Luxious" target="_blank" title="GitHub">⌥</a>
+    </div>
+    <div class="foot-copy">© 2026 LUXIOUSBOT · ALL RIGHTS RESERVED · AUTONOMOUS AI AGENT</div>
+  </div>
+</footer>
+
+<!-- STATUS PILL -->
+<div class="status-pill"><span class="dot"></span> <span data-i18n="status">ALL SYSTEMS OPERATIONAL</span></div>
+
+<!-- BACK TO TOP -->
+<a href="#" class="btt" id="btt" aria-label="Back to top">↑</a>
+
+<!-- TOAST -->
+<div class="toast" id="toast">⚡ <span id="toastMsg">Luxious activated</span></div>
+
+<script>
+/* ============================================
+   LUXIOUS Landing — interactive features
+   ============================================ */
+
+/* ---------- Boot splash sequence ---------- */
+(function bootSequence(){
+  const boot=document.getElementById('boot');
+  const fill=document.getElementById('bootFill');
+  const log=document.getElementById('bootLog');
+  const seq=[
+    '▸ booting autonomous core...',
+    '▸ loading planner module...',
+    '▸ wiring tool registry...',
+    '▸ agent <b>ONLINE</b>'
+  ];
+  let i=0;
+  const tick=()=>{
+    if(i<seq.length){log.innerHTML=seq[i++];setTimeout(tick,420);}
+  };
+  setTimeout(()=>{fill.style.width='100%';tick();},120);
+  setTimeout(()=>{boot.classList.add('gone');setTimeout(()=>boot.remove(),900);},2100);
+})();
+
+/* ---------- Custom cursor ---------- */
+(function(){
+  if(window.matchMedia('(max-width:900px)').matches)return;
+  const cur=document.getElementById('cur'),ring=document.getElementById('ring');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+  (function loop(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(loop)})();
+  document.querySelectorAll('a,button,.faq-q,.sim-tpl').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{cur.style.width='14px';cur.style.height='14px';cur.style.background='var(--g)';ring.style.width='48px';ring.style.height='48px';ring.style.borderColor='rgba(0,230,118,0.6)'});
+    el.addEventListener('mouseleave',()=>{cur.style.width='8px';cur.style.height='8px';cur.style.background='var(--o)';ring.style.width='32px';ring.style.height='32px';ring.style.borderColor='rgba(255,94,20,0.4)'});
+  });
+})();
+
+/* ---------- Scroll reveal ---------- */
+const obs=new IntersectionObserver(entries=>entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('in'),i*60);obs.unobserve(e.target);}}),{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+/* ---------- Scroll progress + back-to-top ---------- */
+const prog=document.getElementById('scrollProg'),btt=document.getElementById('btt');
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  const pct=h.scrollTop/(h.scrollHeight-h.clientHeight);
+  prog.style.width=(pct*100)+'%';
+  if(window.scrollY>700)btt.classList.add('show');else btt.classList.remove('show');
+},{passive:true});
+
+/* ---------- Animated counters ---------- */
+(function(){
+  const counters=document.querySelectorAll('.stat-val[data-count]');
+  const animate=el=>{
+    const target=+el.dataset.count;
+    const suffix=el.dataset.suffix||'';
+    const dur=1400,start=performance.now();
+    const step=now=>{
+      const t=Math.min(1,(now-start)/dur);
+      const eased=1-Math.pow(1-t,3);
+      const val=Math.floor(target*eased);
+      el.innerHTML=val.toLocaleString()+(suffix?'<span>'+suffix+'</span>':'');
+      if(t<1)requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const co=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){animate(e.target);co.unobserve(e.target);}}),{threshold:0.4});
+  counters.forEach(c=>co.observe(c));
+})();
+
+/* ---------- FAQ ---------- */
+function toggleFaq(el){const item=el.parentElement,open=item.classList.contains('open');document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));if(!open)item.classList.add('open')}
+
+/* ---------- Mission control bar rotator ---------- */
+(function(){
+  const statuses=['EXECUTING MISSION','DEEP RESEARCH ACTIVE','PLANNING NEXT STEP','TOOLS CONNECTED','AGENT ONLINE'];
+  let si=0;const bt=document.querySelector('.bar-title');
+  if(!bt)return;
+  setInterval(()=>{si=(si+1)%statuses.length;bt.style.opacity='0';setTimeout(()=>{bt.textContent='LUXIOUS · '+statuses[si];bt.style.opacity='1'},300)},3000);
+})();
+
+/* ---------- Mobile drawer ---------- */
+(function(){
+  const ham=document.getElementById('hamburger'),drawer=document.getElementById('mobileDrawer'),overlay=document.getElementById('drawerOverlay');
+  const close=()=>{ham.classList.remove('open');drawer.classList.remove('open');overlay.classList.remove('open');document.body.style.overflow='';};
+  const open=()=>{ham.classList.add('open');drawer.classList.add('open');overlay.classList.add('open');document.body.style.overflow='hidden';};
+  ham.addEventListener('click',()=>{drawer.classList.contains('open')?close():open();});
+  overlay.addEventListener('click',close);
+  drawer.querySelectorAll('a').forEach(a=>a.addEventListener('click',close));
+})();
+
+/* ---------- Live mission ticker ---------- */
+(function(){
+  const items=[
+    ['Market research · SaaS pricing','RESEARCH','3m ago'],
+    ['Daily intel brief · Crypto','BRIEF','5m ago'],
+    ['Blog post · 1,800 words','WRITE','8m ago'],
+    ['Competitor scan · 12 brands','SCAN','11m ago'],
+    ['CSV anomaly detection','DATA','14m ago'],
+    ['Twitter sentiment digest','SOCIAL','19m ago'],
+    ['Travel plan · Bali, 5 days','PLAN','22m ago'],
+    ['News summary · AI sector','NEWS','26m ago'],
+    ['Lead enrichment · 40 rows','SALES','31m ago'],
+    ['Product launch checklist','OPS','36m ago'],
+    ['Translation · ID → EN','LANG','42m ago'],
+    ['Investor update draft','DOC','48m ago'],
+  ];
+  const track=document.getElementById('tickerTrack');
+  const build=()=>items.map(([t,tag,time])=>`<div class="tick-item"><span class="ti-dot"></span><span class="ti-tag">${tag}</span>${t}<span class="ti-time">· ${time}</span></div>`).join('');
+  track.innerHTML=build()+build();
+})();
+
+/* ---------- Testimonials carousel ---------- */
+(function(){
+  const track=document.getElementById('testTrack');
+  const nav=document.getElementById('testNav');
+  if(!track)return;
+  const cards=track.children.length;
+  let idx=0;
+  for(let i=0;i<cards;i++){
+    const b=document.createElement('button');b.className='test-dot'+(i===0?' active':'');b.dataset.i=i;
+    b.addEventListener('click',()=>go(+b.dataset.i));
+    nav.appendChild(b);
+  }
+  const go=i=>{idx=(i+cards)%cards;track.style.transform='translateX(-'+idx*100+'%)';nav.querySelectorAll('.test-dot').forEach((d,j)=>d.classList.toggle('active',j===idx));};
+  setInterval(()=>go(idx+1),6500);
+})();
+
+/* ---------- Newsletter ---------- */
+(function(){
+  const f=document.getElementById('newsForm'),i=document.getElementById('newsInput'),s=document.getElementById('newsSuccess');
+  f.addEventListener('submit',e=>{
+    e.preventDefault();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(i.value)){i.style.borderColor='var(--o)';return;}
+    i.style.borderColor='var(--g)';i.value='';s.classList.add('show');
+    setTimeout(()=>s.classList.remove('show'),5000);
+  });
+  i.addEventListener('input',()=>{i.style.borderColor='';});
+})();
+
+/* ---------- Mission simulator ---------- */
+(function(){
+  const templates={
+    research:{
+      label:'Research the top 5 AI coding tools and compile pricing + features into a comparison table.',
+      steps:[
+        ['🧠','Parsed objective: market research on AI coding tools.'],
+        ['🔍','Querying 8 search sources for "AI coding assistant 2026"...'],
+        ['🌐','Fetched 24 product pages and 6 review aggregators.'],
+        ['📊','Extracting pricing tiers and feature matrices...'],
+        ['⚖️','Scoring tools by capability/cost ratio...'],
+        ['📝','Drafting structured comparison table...'],
+        ['✅','Mission complete · 5 tools ranked, 3 standouts surfaced.']
+      ],
+      final:'Report ready. I would deliver this as a Telegram message + downloadable doc.'
+    },
+    content:{
+      label:'Write a 1,200-word blog post on "Why autonomous agents beat chat AI for real workflows".',
+      steps:[
+        ['🧠','Parsed objective: long-form blog post on autonomous agents.'],
+        ['🔍','Researching topic depth, recent angles, and source citations...'],
+        ['🗂️','Built outline: 5 sections + intro + closing CTA.'],
+        ['📝','Drafting paragraphs with SEO-aware keyword placement...'],
+        ['🔁','Self-reviewing tone, flow, and factual accuracy...'],
+        ['✨','Polishing for publication...'],
+        ['✅','Mission complete · 1,237 words, 4 internal links suggested.']
+      ],
+      final:'Draft is ready to publish. I would post it to your CMS or send as a doc.'
+    },
+    data:{
+      label:'Analyze attached CSV: detect anomalies, summarize trends, and surface top insights.',
+      steps:[
+        ['🧠','Parsed objective: anomaly detection + trend summary.'],
+        ['📁','Loaded CSV: 12,400 rows × 18 columns.'],
+        ['🧹','Normalizing columns, parsing dates, handling nulls...'],
+        ['📊','Running rolling-window statistics and z-score outlier scan...'],
+        ['🚨','Detected 14 anomalies (≥3σ) clustered in Q2.'],
+        ['💡','Identified 3 key trends: weekday seasonality, regional skew, post-launch lift.'],
+        ['✅','Mission complete · structured insight report ready.']
+      ],
+      final:'I would deliver charts + insight summary to Telegram with the full report file.'
+    },
+    brief:{
+      label:'Send me a daily brief every morning: top 5 news in AI, my niche updates, and 1 action.',
+      steps:[
+        ['🧠','Parsed objective: recurring daily brief mission.'],
+        ['📅','Scheduling daily run at 07:00 local time.'],
+        ['📡','Wiring news feeds + niche RSS sources...'],
+        ['🔍','Test-fetching today\'s top 47 headlines...'],
+        ['🪄','Synthesizing 5 most relevant items + your action item...'],
+        ['✉️','Routing to Telegram delivery channel...'],
+        ['✅','Mission armed · first brief lands tomorrow at 07:00.']
+      ],
+      final:'Recurring mission active. I will keep running until you say /stop.'
+    },
+    trip:{
+      label:'Plan a 5-day Bali trip for 2 people, mid-budget, foodie + nature focus.',
+      steps:[
+        ['🧠','Parsed objective: 5-day Bali itinerary, 2 pax, mid-budget.'],
+        ['🌐','Pulling current flight + hotel data, food guides, and reviews...'],
+        ['🗺️','Mapping regions: Ubud → Canggu → Uluwatu cluster.'],
+        ['🍜','Curating 12 standout food spots across regions...'],
+        ['🌿','Slotting nature stops: rice terraces, waterfalls, sunset cliffs.'],
+        ['📋','Compiling day-by-day itinerary with timing + transit...'],
+        ['✅','Mission complete · 5-day plan + budget breakdown ready.']
+      ],
+      final:'Itinerary delivered. I would also book if you give me green light + payment.'
+    }
+  };
+  const tplBtns=document.querySelectorAll('.sim-tpl');
+  const input=document.getElementById('simInput');
+  const go=document.getElementById('simGo');
+  const clr=document.getElementById('simClear');
+  const log=document.getElementById('simLog');
+  const empty=document.getElementById('simEmpty');
+  let active=null,running=false;
+
+  tplBtns.forEach(b=>b.addEventListener('click',()=>{
+    if(running)return;
+    tplBtns.forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    active=b.dataset.tpl;
+    input.value=templates[active].label;
+  }));
+
+  clr.addEventListener('click',()=>{
+    if(running)return;
+    input.value='';tplBtns.forEach(x=>x.classList.remove('active'));active=null;
+    log.innerHTML='';log.style.display='none';empty.style.display='flex';
+  });
+
+  const ts=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');};
+  const append=(ic,msg,cls='')=>{
+    const div=document.createElement('div');
+    div.className='sim-line '+cls;
+    div.innerHTML=`<span class="ts">${ts()}</span><span class="ic">${ic}</span><span class="msg">${msg}</span>`;
+    log.appendChild(div);log.scrollTop=log.scrollHeight;
+  };
+
+  go.addEventListener('click',async()=>{
+    if(running)return;
+    const txt=input.value.trim();
+    if(!txt){input.style.borderColor='var(--o)';setTimeout(()=>input.style.borderColor='',1500);return;}
+    running=true;go.style.opacity='.55';go.style.pointerEvents='none';
+    empty.style.display='none';log.style.display='flex';log.innerHTML='';
+    const plan=active&&templates[active]?templates[active]:{
+      steps:[['🧠','Parsed objective: '+txt.slice(0,80)+(txt.length>80?'...':'')],
+        ['🔍','Researching context and gathering sources...'],
+        ['🗂️','Decomposing into 4 executable steps...'],
+        ['⚙️','Executing step 1 of 4...'],
+        ['⚙️','Executing step 2 of 4...'],
+        ['⚙️','Executing step 3 of 4...'],
+        ['✅','Mission complete · output ready for delivery.']],
+      final:'I would deliver the output to your Telegram chat with @Luxious01_bot.'
+    };
+    append('▸','Mission received: <b style="color:#fff">'+txt.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))+'</b>');
+    await new Promise(r=>setTimeout(r,400));
+    for(let i=0;i<plan.steps.length;i++){
+      const [ic,msg]=plan.steps[i];
+      append(ic,msg,i===plan.steps.length-1?'done':'');
+      await new Promise(r=>setTimeout(r,650+Math.random()*350));
+    }
+    const final=document.createElement('div');
+    final.className='sim-final';
+    final.innerHTML='✓ '+plan.final+' <a href="https://t.me/Luxious01_bot" target="_blank" style="color:var(--o);text-decoration:underline;margin-left:auto">Run for real →</a>';
+    log.appendChild(final);
+    running=false;go.style.opacity='';go.style.pointerEvents='';
+  });
+})();
+
+/* ---------- Toast ---------- */
+function showToast(msg){
+  const t=document.getElementById('toast'),m=document.getElementById('toastMsg');
+  m.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ---------- Easter egg ---------- */
+(function(){
+  let buf='';
+  document.addEventListener('keydown',e=>{
+    if(e.target.matches('input,textarea'))return;
+    buf=(buf+e.key.toLowerCase()).slice(-8);
+    if(buf.endsWith('luxious')){
+      showToast('🜲 SECRET PROTOCOL UNLOCKED');
+      document.body.animate([{filter:'hue-rotate(0)'},{filter:'hue-rotate(180deg)'},{filter:'hue-rotate(0)'}],{duration:1200});
+      buf='';
+    }
+  });
+})();
+
+/* ---------- Language toggle ---------- */
+(function(){
+  const dict={
+    en:{},
+    id:{
+      'nav.cap':'KEMAMPUAN','nav.mis':'MISI','nav.sim':'SIMULATOR','nav.pri':'HARGA','nav.road':'ROADMAP','nav.launch':'AKTIFKAN ↗',
+      'hero.eye':'AGEN AI OTONOM · ONLINE','hero.h1':'HALO,','hero.h2':'SAYA','hero.h3':'LUXIOUS.',
+      'hero.desc':'<strong>Pengambil keputusan otonom</strong> Anda yang menghubungkan tools, data, dan aplikasi jadi satu otak. Saya merencanakan misi multi-langkah, meneliti mendalam, dan <strong>mengeksekusi tanpa banyak diarahkan.</strong>',
+      'hero.cta1':'⚡ AKTIFKAN LUXIOUS','hero.cta2':'LIHAT BERAKSI →',
+      'stat1':'MISI SELESAI','stat2':'TINGKAT SUKSES','stat3':'SELALU ONLINE','stat4':'TANPA ARAHAN','orb':'LUXIOUS ONLINE & SIAP',
+      'cap.tag':'KEMAMPUAN INTI','cap.h2a':'YANG SAYA ','cap.h2b':'LAKUKAN.','cap.sub':'Bukan chatbot. Bukan mesin prompt. Agen otonom yang berpikir, merencanakan, dan mengeksekusi di seluruh dunia digital Anda.',
+      'cap.1.t':'PERENCANAAN MULTI-LANGKAH','cap.1.d':'Saya memecah tujuan kompleks menjadi sub-misi yang dapat dieksekusi, mengurutkannya cerdas hingga sampai tujuan tanpa arahan terus-menerus.',
+      'cap.2.t':'RISET MENDALAM','cap.2.d':'Saya cari, sintesis, dan silang-rujuk lintas web, dokumen, dan sumber data live — memberi insight, bukan sekadar hasil.',
+      'cap.3.t':'EKSEKUSI TOOLS','cap.3.d':'API, database, aplikasi, file — saya hubungkan dan orkestrasi semua dalam satu pipeline mulus. Tanpa pindah tab.',
+      'cap.4.t':'UNIFIKASI DATA','cap.4.d':'Data tercerai-berai jadi satu lapisan intelijen koheren. Saya jembatani tools Anda, mengubah silo jadi otak terintegrasi.',
+      'cap.5.t':'PENGAMBILAN KEPUTUSAN','cap.5.d':'Saya tidak hanya menyajikan opsi — saya evaluasi, prioritaskan, dan bertindak. Beri saya misi, saya yang menggerakkan.',
+      'cap.6.t':'KOREKSI DIRI','cap.6.d':'Jika jalan tertutup, saya cari rute lain. Jika output meleset, saya iterasi. Tidak ada error sebagai jalan buntu.',
+      'mis.tag':'DEMO MISI LIVE','mis.h2a':'MISI YANG SEDANG ','mis.h2b':'BERJALAN.','mis.sub':'Lihat Luxious menangani tugas multi-langkah dari satu instruksi sederhana — tanpa diawasi.',
+      'sim.tag':'SIMULATOR INTERAKTIF','sim.h2a':'COBA SAYA ','sim.h2b':'SEKARANG.','sim.sub':'Pilih template atau tulis misi sendiri. Lihat bagaimana saya akan merencanakan dan mengeksekusinya — tanpa daftar.',
+      'sim.lbl1':'▸ PILIH TEMPLATE','sim.lbl2':'▸ MISI ANDA','sim.run':'JALANKAN MISI','sim.clear':'BERSIH','sim.empty':'PILIH TEMPLATE ATAU TULIS MISI<br>Saya tunjukkan persis bagaimana saya akan menanganinya.',
+      'tool.tag':'TOOLS TERHUBUNG','tool.h2a':'TOOLS YANG ','tool.h2b':'SAYA KUASAI.','tool.sub':'Saya terintegrasi dengan aplikasi dan sumber data yang sudah Anda pakai — dan mengorkestrasinya jadi satu sistem.',
+      'cmp.tag':'PERBANDINGAN','cmp.h2a':'KENAPA ','cmp.h2b':'LUXIOUS?','cmp.sub':'Lihat bagaimana Luxious dibanding AI chat biasa dan workflow manual.',
+      'cmp.col0':'KEMAMPUAN','cmp.col4':'MANUAL','cmp.r1':'Perencanaan multi-langkah','cmp.r2':'Eksekusi otonom','cmp.r3':'Riset real-time','cmp.r4':'Pengambilan keputusan','cmp.r5':'Tanpa coding','cmp.r6':'24/7 selalu hidup','cmp.r7':'Auto-koreksi error',
+      'use.tag':'KEGUNAAN','use.h2a':'YANG BISA ANDA ','use.h2b':'TUGASKAN.','use.sub':'Beri saya tujuan, bukan langkah-per-langkah. Sisanya saya yang urus.',
+      'use.1.t':'RISET KOMPETITIF','use.1.d':'Tugaskan pasar atau kompetitor — saya riset, bandingkan, skor, dan kirim brief intelijen terstruktur.',
+      'use.2.t':'PRODUKSI KONTEN','use.2.d':'Beri saya topik dan target. Saya riset, draft, struktur, dan finalkan konten siap publikasi.',
+      'use.3.t':'PIPELINE DATA','use.3.d':'Hubungkan sumber data dan saya akan bersihkan, transformasi, analisis, dan munculkan insight penting.',
+      'use.4.t':'OTOMATISASI WORKFLOW','use.4.d':'Jelaskan tugas berulang dan saya akan petakan jadi pipeline otomatis — menghemat berjam-jam tiap minggu.',
+      'test.tag':'LAPORAN PENGGUNA','test.h2a':'DARI ','test.h2b':'LAPANGAN.','test.sub':'Apa kata operator setelah menjalankan misi dengan Luxious.',
+      'test.q1':'Saya minta Luxious meneliti 30 kompetitor, bandingkan harga, dan tulis brief. Hasil datang 4 menit kemudian — yang biasanya makan 3 hari analyst saya. Saya tidak akan kembali.',
+      'test.q2':'Yang bikin saya yakin itu perencanaannya. Saya kasih tujuan vague dan Luxious memecahnya jadi langkah bersih tanpa nanya. Itu yang sering gagal di agen lain.',
+      'test.q3':'Saya jalankan konsultasi sendirian. Luxious handle riset harian, tulis brief klien, dan ping saya di Telegram kalau ada yang butuh keputusan. Seperti punya senior associate seharga $9.',
+      'test.q4':'Kebanyakan "AI agent" cuma wrapper. Luxious benar-benar merencanakan, gagal, retry, dan menyelesaikan. Loop koreksi-diri itu produk aslinya.',
+      'pri.tag':'HARGA','pri.h2a':'PAKET SEDERHANA. ','pri.h2b':'KEKUATAN PENUH.','pri.sub':'Mulai gratis. Skala saat siap.',
+      'road.tag':'ROADMAP','road.h2a':'ARAH ','road.h2b':'KAMI.','road.sub':'Luxious berkembang cepat. Berikut yang akan datang.',
+      'faq.tag':'FAQ','faq.h2a':'PERTANYAAN ','faq.h2b':'DIJAWAB.',
+      'faq.q1':'Apa yang membuat Luxious berbeda dari chatbot biasa?','faq.a1':'Luxious adalah agen otonom — bukan sekadar membalas prompt, ia merencanakan dan mengeksekusi misi multi-langkah. Anda tugaskan tujuan, Luxious memecahnya, pakai tools, ambil keputusan, dan kirim hasil. Tanpa bolak-balik.',
+      'faq.q2':'Bagaimana cara menugaskan misi ke Luxious?','faq.a2':'Cukup buka bot Luxious di Telegram, deskripsikan tujuan dengan bahasa alami, dan Luxious mulai bekerja. Anda akan menerima update status dan hasil akhir langsung di chat.',
+      'faq.q3':'Tugas seperti apa yang bisa Luxious tangani?','faq.a3':'Riset, analisis kompetitif, pembuatan konten, pemrosesan data, otomatisasi workflow, generasi dokumen, dan sintesis info multi-sumber. Jika bisa dipecah jadi langkah dan dieksekusi dengan tools, Luxious bisa.',
+      'faq.q4':'Apakah saya harus online selama misi berjalan?','faq.a4':'Tidak. Luxious bekerja otonom. Tugaskan misi, lakukan hal lain, dan terima output saat selesai. Itulah intinya — tanpa diawasi.',
+      'faq.q5':'Apakah data saya aman dengan Luxious?','faq.a5':'Ya. Luxious memproses request dalam sesi terisolasi dan tidak menyimpan data misi pribadi setelah selesai. Semua koneksi terenkripsi.',
+      'faq.q6':'Bisa cancel langganan Pro kapan saja?','faq.a6':'Tentu. Cancel kapan saja lewat Telegram. Akses tetap sampai akhir periode billing tanpa biaya tambahan.',
+      'news.eye':'DISPATCH MISI · MINGGUAN','news.h2a':'DAPATKAN INTEL MISI ','news.h2b':'DI INBOX ANDA.','news.sub':'Fitur baru, strategi agen, studi kasus. Tidak ada spam.','news.btn':'LANGGANAN →','news.ph':'agen@domainanda.com','news.ok':'TERDAFTAR · INTEL MISI SEDANG MENUJU',
+      'conn.tag':'TEMUKAN LUXIOUS','conn.h2a':'TERHUBUNG DENGAN ','conn.h2b':'AGEN.',
+      'final.label':'LUXIOUS ONLINE · SIAP EKSEKUSI','final.h2a':'TUGASKAN','final.h2b':'MISI PERTAMA.','final.sub':'Tanpa setup. Tanpa diawasi. Hasil saja.','final.btn':'AKTIFKAN DI TELEGRAM ↗',
+      'status':'SEMUA SISTEM BERJALAN'
+    }
+  };
+  const apply=lang=>{
+    document.documentElement.dataset.lang=lang;
+    document.querySelectorAll('[data-i18n]').forEach(el=>{
+      const k=el.dataset.i18n;
+      if(lang==='en')return; // English is default in markup
+      if(dict[lang][k])el.innerHTML=dict[lang][k];
+    });
+    document.querySelectorAll('[data-i18n-attr]').forEach(el=>{
+      try{
+        const map=JSON.parse(el.dataset.i18nAttr);
+        for(const [attr,k] of Object.entries(map)){
+          if(dict[lang][k])el.setAttribute(attr,dict[lang][k]);
+        }
+      }catch{}
+    });
+    document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
+    try{localStorage.setItem('lux-lang',lang);}catch{}
+  };
+  document.querySelectorAll('.lang-toggle button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const l=b.dataset.lang;
+      if(l==='en')location.reload();else apply(l);
+    });
+  });
+  try{
+    const saved=localStorage.getItem('lux-lang');
+    if(saved&&saved!=='en')apply(saved);
+  }catch{}
+})();
+</script>
+</body>
+</html>
